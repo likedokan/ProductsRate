@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মুদি দোকান - অফলাইন ও অনলাইন ব্যাকআপ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"> </script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <script>
+        // ফায়ারবেস কনফিগারেশন
+        const firebaseConfig = {
+            apiKey: "AIzaSyDgFaTrHW7Grp_Q22p6KNcHZxaEujHsLsE",
+            authDomain: "exchange-project-d4028.firebaseapp.com",
+            databaseURL: "https://exchange-project-d4028-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "exchange-project-d4028",
+            storageBucket: "exchange-project-d4028.firebasestorage.app",
+            messagingSenderId: "313976742479",
+            appId: "1:313976742479:web:45951b360d875c4768c03a",
+            measurementId: "G-PQMFYZS958"
+        };
+
+        // ফায়ারবেস ইনিশিয়ালাইজ
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const productsRef = db.ref('products');
+        const STORAGE_KEY = 'mudi_dokan_offline_data';
+
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': '#007bff',
+                        'app-bg': '#F8F9FA',
+                        'card-bg': '#FFFFFF',
+                        'text-default': '#343a40',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007bff !important; 
+            box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2);
+        }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
+        .toast { animation: fadeIn 0.5s, fadeOut 0.5s 2.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(20px); } }
+    </style>
+</head>
+<body class="bg-app-bg min-h-screen p-4 sm:p-8">
+    
+    <div id="toast-container"></div>
+
+    <div class="max-w-5xl mx-auto">
+        <header class="text-center mb-8 bg-card-bg p-6 rounded-xl shadow-lg border-b-4 border-primary">
+            <h1 class="text-4xl font-extrabold text-text-default mb-2">পণ্য তালিকা ব্যবস্থাপক</h1>
+            <p class="text-gray-600 text-lg">লোকাল স্টোরেজ ও অনলাইন সিঙ্ক সুবিধা সহ</p>
+            <div id="onlineStatus" class="mt-2 text-xs font-bold inline-block px-2 py-1 rounded bg-gray-200 text-gray-600">চেকিং...</div>
+        </header>
+
+        <!-- টগল বাটন (Inline CSS সহ) -->
+        <div style="text-align: right; margin-bottom: 15px;">
+            <button id="toggleBtn" onclick="toggleAddProductForm()" style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                + নতুন পণ্য যোগ করুন
+            </button>
+        </div>
+
+        <!-- ফর্ম সেকশন -->
+        <div id="addProductSection" class="bg-card-bg p-6 rounded-xl shadow-xl mb-8 border border-gray-100" style="display: none;">
+            <h2 id="formTitle" class="text-2xl font-semibold text-text-default mb-6 border-b pb-3">নতুন পণ্য তথ্য দিন</h2>
+            
+            <form id="productForm" class="space-y-4">
+                <input type="hidden" id="editProductId" value="">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="productName" placeholder="পণ্যের নাম" required class="w-full p-3 border rounded-lg">
+                    <input type="number" id="productPrice" placeholder="দাম (টাকা)" step="0.01" required class="w-full p-3 border rounded-lg">
+                    <input type="text" id="mainCategory" list="mainCategorySuggestions" placeholder="মেইন ক্যাটাগরি" required class="w-full p-3 border rounded-lg">
+                    <input type="text" id="subCategory" list="subCategorySuggestions" placeholder="সাব-ক্যাটাগরি" required class="w-full p-3 border rounded-lg">
+                </div>
+                <datalist id="mainCategorySuggestions"></datalist>
+                <datalist id="subCategorySuggestions"></datalist>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                    <button type="submit" id="submitButton" class="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-blue-600 transition">সংরক্ষণ করুন</button>
+                    <button type="button" id="cancelEditButton" onclick="resetForm(); toggleAddProductForm();" class="w-full py-3 bg-gray-400 text-white font-semibold rounded-lg hidden">বাতিল করুন</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- তালিকা সেকশন -->
+        <div class="bg-card-bg p-6 rounded-xl shadow-xl border border-gray-100">
+            <div class="flex justify-between items-center mb-6 border-b pb-3">
+                <h2 class="text-2xl font-semibold text-text-default">পণ্য তালিকা</h2>
+                <span id="totalProducts" class="text-primary bg-blue-100 px-3 py-1 rounded-full font-bold">মোট: 0টি</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <input type="text" id="searchBar" placeholder="খুঁজুন..." class="p-3 border rounded-lg sm:col-span-2">
+                <select id="mainCategoryFilter" class="p-3 border rounded-lg"><option value="">সকল মেইন ক্যাটাগরি</option></select>
+                <select id="subCategoryFilter" disabled class="p-3 border rounded-lg"><option value="">সকল সাব-ক্যাটাগরি</option></select>
+            </div>
+            
+            <div id="productList" class="space-y-6">
+                <!-- ডাটা এখানে আসবে -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const addProductSection = document.getElementById('addProductSection');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const productForm = document.getElementById('productForm');
+        let allProducts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; // প্রথমে লোকাল স্টোরেজ থেকে লোড
+
+        // অনলাইন স্ট্যাটাস চেক
+        const statusEl = document.getElementById('onlineStatus');
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                statusEl.innerText = "অনলাইন";
+                statusEl.className = "mt-2 text-xs font-bold inline-block px-2 py-1 rounded bg-green-100 text-green-600";
+            } else {
+                statusEl.innerText = "অফলাইন";
+                statusEl.className = "mt-2 text-xs font-bold inline-block px-2 py-1 rounded bg-red-100 text-red-600";
+            }
+        }
+
+        function toggleAddProductForm() {
+            if (addProductSection.style.display === 'none') {
+                addProductSection.style.display = 'block';
+                toggleBtn.innerText = 'বন্ধ করুন';
+                toggleBtn.style.backgroundColor = '#6c757d';
+            } else {
+                addProductSection.style.display = 'none';
+                toggleBtn.innerText = '+ নতুন পণ্য যোগ করুন';
+                toggleBtn.style.backgroundColor = '#007bff';
+                resetForm();
+            }
+        }
+
+        // Firebase থেকে ডাটা সিঙ্ক করা
+        productsRef.on('value', (snapshot) => {
+            const fbData = snapshot.val() || {};
+            // Firebase এর ডাটা লেটেস্ট হলে লোকাল স্টোরেজ আপডেট করো
+            allProducts = fbData;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allProducts));
+            renderProductList();
+            populateCategoryFilters();
+            updateOnlineStatus();
+        });
+
+        productForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editProductId').value;
+            const productData = {
+                name: document.getElementById('productName').value.trim(),
+                price: parseFloat(document.getElementById('productPrice').value).toFixed(2),
+                mainCategory: document.getElementById('mainCategory').value.trim(),
+                subCategory: document.getElementById('subCategory').value.trim(),
+                timestamp: Date.now()
+            };
+
+            // লোকাল স্টোরেজে আগে সেভ করো (তাত্ক্ষণিক ফিডব্যাক)
+            const targetId = id || Date.now().toString();
+            allProducts[targetId] = productData;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allProducts));
+            renderProductList();
+
+            // Firebase-এ আপডেট পাঠাও
+            if (id) {
+                productsRef.child(id).update(productData)
+                    .then(() => showToast("আপডেট হয়েছে", "success"))
+                    .catch(() => showToast("অফলাইনে সেভ হয়েছে", "success"));
+                resetForm();
+                toggleAddProductForm();
+            } else {
+                // নতুন আইটেম হলে Firebase এর নতুন Key জেনারেট করো
+                const newRef = productsRef.push();
+                newRef.set(productData)
+                    .then(() => showToast("যোগ হয়েছে", "success"))
+                    .catch(() => showToast("অফলাইনে যোগ হয়েছে", "success"));
+                toggleAddProductForm();
+            }
+        });
+
+        function deleteProduct(id) {
+            if(confirm("আপনি কি নিশ্চিত?")) {
+                // লোকাল থেকে ডিলিট
+                delete allProducts[id];
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(allProducts));
+                renderProductList();
+
+                // Firebase থেকে ডিলিট
+                productsRef.child(id).remove()
+                    .then(() => showToast("মুছে ফেলা হয়েছে", "error"))
+                    .catch(() => showToast("অফলাইনে ডিলিট হয়েছে", "error"));
+            }
+        }
+
+        function editProduct(id) {
+            const p = allProducts[id];
+            if(!p) return;
+            document.getElementById('editProductId').value = id;
+            document.getElementById('productName').value = p.name;
+            document.getElementById('productPrice').value = p.price;
+            document.getElementById('mainCategory').value = p.mainCategory;
+            document.getElementById('subCategory').value = p.subCategory;
+            
+            document.getElementById('formTitle').innerText = "পণ্যটি সম্পাদনা করুন";
+            document.getElementById('submitButton').innerText = "আপডেট করুন";
+            document.getElementById('cancelEditButton').classList.remove('hidden');
+            
+            if (addProductSection.style.display === 'none') toggleAddProductForm();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            productForm.reset();
+            document.getElementById('editProductId').value = '';
+            document.getElementById('formTitle').innerText = "নতুন পণ্য তথ্য দিন";
+            document.getElementById('submitButton').innerText = "সংরক্ষণ করুন";
+            document.getElementById('cancelEditButton').classList.add('hidden');
+        }
+
+        function renderProductList() {
+            const listDiv = document.getElementById('productList');
+            const search = document.getElementById('searchBar').value.toLowerCase();
+            const mainF = document.getElementById('mainCategoryFilter').value;
+            const subF = document.getElementById('subCategoryFilter').value;
+            
+            listDiv.innerHTML = '';
+            let count = 0;
+
+            const grouped = {};
+            Object.keys(allProducts).forEach(id => {
+                const p = allProducts[id];
+                if ((!search || p.name.toLowerCase().includes(search)) &&
+                    (!mainF || p.mainCategory === mainF) &&
+                    (!subF || p.subCategory === subF)) {
+                    
+                    if (!grouped[p.mainCategory]) grouped[p.mainCategory] = {};
+                    if (!grouped[p.mainCategory][p.subCategory]) grouped[p.mainCategory][p.subCategory] = [];
+                    grouped[p.mainCategory][p.subCategory].push({id, ...p});
+                    count++;
+                }
+            });
+
+            document.getElementById('totalProducts').innerText = `মোট: ${count}টি`;
+
+            if (count === 0) {
+                listDiv.innerHTML = '<p class="text-center text-gray-500 py-10 bg-gray-50 rounded-lg border-2 border-dashed">কোনো পণ্য পাওয়া যায়নি।</p>';
+                return;
+            }
+
+            for (let main in grouped) {
+                let mHtml = `<div class="bg-blue-50 p-3 rounded-lg font-bold border-l-4 border-primary mt-6 mb-2 text-text-default shadow-sm">${main}</div><div class="ml-4 space-y-6">`;
+                for (let sub in grouped[main]) {
+                    mHtml += `<div><div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">-- ${sub}</div><div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">`;
+                    grouped[main][sub].forEach(p => {
+                        mHtml += `
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col justify-between">
+                                <div>
+                                    <h3 class="font-bold text-gray-800 truncate" title="${p.name}">${p.name}</h3>
+                                    <p class="text-2xl font-black text-primary mt-1">৳${p.price}</p>
+                                </div>
+                                <div class="flex justify-end gap-3 mt-4 pt-3 border-t border-gray-50">
+                                    <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 transition">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                    </button>
+                                    <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 transition">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                </div>
+                            </div>`;
+                    });
+                    mHtml += `</div></div>`;
+                }
+                mHtml += `</div>`;
+                listDiv.innerHTML += mHtml;
+            }
+        }
+
+        function populateCategoryFilters() {
+            const mainFilter = document.getElementById('mainCategoryFilter');
+            const mains = [...new Set(Object.values(allProducts).map(p => p.mainCategory))];
+            const currentMain = mainFilter.value;
+            
+            mainFilter.innerHTML = '<option value="">সকল মেইন ক্যাটাগরি</option>';
+            mains.sort().forEach(m => {
+                mainFilter.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+            mainFilter.value = currentMain;
+        }
+
+        function showToast(msg, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast p-4 rounded-lg shadow-lg text-white mb-2 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.innerText = msg;
+            document.getElementById('toast-container').appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        document.getElementById('searchBar').addEventListener('input', renderProductList);
+        document.getElementById('mainCategoryFilter').addEventListener('change', (e) => {
+            const subFilter = document.getElementById('subCategoryFilter');
+            if (e.target.value) {
+                subFilter.disabled = false;
+                const subs = [...new Set(Object.values(allProducts).filter(p => p.mainCategory === e.target.value).map(p => p.subCategory))];
+                subFilter.innerHTML = '<option value="">সকল সাব-ক্যাটাগরি</option>';
+                subs.sort().forEach(s => subFilter.innerHTML += `<option value="${s}">${s}</option>`);
+            } else {
+                subFilter.disabled = true;
+                subFilter.value = "";
+            }
+            renderProductList();
+        });
+        document.getElementById('subCategoryFilter').addEventListener('change', renderProductList);
+
+        window.onload = function() {
+            updateOnlineStatus();
+            renderProductList();
+            populateCategoryFilters();
+        };
+    </script>
+</body>
+</html>
+
