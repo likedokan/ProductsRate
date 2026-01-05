@@ -137,7 +137,6 @@
 
         .hidden { display: none; }
 
-        /* Style for Export Button */
         .btn-export {
             background-color: #f0f2f5;
             color: #1c1e21;
@@ -148,6 +147,26 @@
             align-items: center;
             justify-content: center;
             gap: 5px;
+        }
+
+        /* স্টোর ব্র্যান্ডিং স্টাইল */
+        .store-header {
+            text-align: center;
+            border-bottom: 2px solid var(--fb-blue);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .store-name {
+            margin: 0;
+            color: var(--fb-blue);
+            font-size: 24px;
+            font-weight: 800;
+        }
+        .store-info {
+            margin: 4px 0;
+            color: var(--fb-gray);
+            font-size: 14px;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -201,6 +220,13 @@
     <!-- Transaction History -->
     <div id="tab-history" class="tab-content hidden">
         <div class="card" id="export-area">
+            <!-- আপনার অনুরোধ করা স্টোর ব্র্যান্ডিং -->
+            <div class="store-header">
+                <h1 class="store-name">Mahira Store</h1>
+                <p class="store-info">Shopkeeper: Jobayer Khan</p>
+                <p class="store-info" style="font-size: 12px;">Time: Fajr - 11:00 am</p>
+            </div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
                 <h2 style="margin:0;">সাম্প্রতিক লেনদেন</h2>
                 <span id="total-cash-today" style="font-size: 12px; font-weight: bold; color: #1877f2;"></span>
@@ -214,7 +240,6 @@
 </div>
 
 <script>
-    // আপনার দেওয়া ফায়ারবেস কনফিগারেশন
     const firebaseConfig = {
         apiKey: "AIzaSyDgFaTrHW7Grp_Q22p6KNcHZxaEujHsLsE",
         authDomain: "exchange-project-d4028.firebaseapp.com",
@@ -226,7 +251,6 @@
         measurementId: "G-PQMFYZS958"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
@@ -373,20 +397,15 @@
         setTimeout(() => msg.style.display = 'none', 2000);
     }
 
-    // New Function: Export History as Image
     function exportAsImage() {
         const element = document.getElementById('export-area');
-        const btn = document.querySelector('.btn-export');
-        
-        // সাময়িকভাবে বাটন হাইড করা হতে পারে যদি বাটন কার্ডের ভেতরে থাকে
-        // এখানে কার্ডের বাইরের অংশ ক্যাপচার করছি
         
         html2canvas(element, {
             backgroundColor: "#FFFFFF",
-            scale: 2 // ভালো কোয়ালিটির জন্য
+            scale: 2 
         }).then(canvas => {
             const link = document.createElement('a');
-            link.download = 'দোকান-খাতা-' + new Date().toLocaleDateString() + '.png';
+            link.download = 'MahiraStore-হিসাব-' + new Date().toLocaleDateString() + '.png';
             link.href = canvas.toDataURL("image/png");
             link.click();
         }).catch(err => {
