@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>মুদি দোকান ম্যানেজমেন্ট</title>
+    <title>দোকান খাতা - ডিজিটাল হিসাব</title>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-auth-compat.js"></script>
@@ -13,13 +13,15 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <style>
-        /* ফেসবুক স্টাইল ইনলাইন সিএসএস */
         :root {
             --fb-blue: #1877F2;
             --fb-bg: #F0F2F5;
             --fb-white: #FFFFFF;
             --fb-gray: #65676B;
             --fb-border: #CED0D4;
+            --success: #42b72a;
+            --danger: #f02849;
+            --bkash-color: #D12053;
         }
 
         body {
@@ -37,10 +39,10 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .nav-tabs {
@@ -60,7 +62,7 @@
             color: var(--fb-gray);
             font-weight: 600;
             border-bottom: 3px solid transparent;
-            transition: 0.2s;
+            font-size: 14px;
         }
 
         .nav-tab.active {
@@ -70,7 +72,7 @@
 
         .container {
             padding: 12px;
-            max-width: 500px;
+            max-width: 600px;
             margin: 0 auto;
         }
 
@@ -82,7 +84,7 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
-        h2 { font-size: 1.1rem; margin: 0 0 12px 0; color: #1c1e21; }
+        h2 { font-size: 1.1rem; margin: 0 0 12px 0; color: #1c1e21; border-bottom: 1px solid #eee; padding-bottom: 5px; }
 
         input, select, button {
             width: 100%;
@@ -91,7 +93,7 @@
             border: 1px solid var(--fb-border);
             border-radius: 6px;
             box-sizing: border-box;
-            font-size: 16px;
+            font-size: 15px;
             outline: none;
         }
 
@@ -101,145 +103,268 @@
             border: none;
             font-weight: bold;
             cursor: pointer;
+            transition: 0.2s;
         }
 
-        button:active { opacity: 0.8; transform: scale(0.98); }
+        button:active { transform: scale(0.98); opacity: 0.9; }
+
+        .btn-add { background-color: var(--success); }
+        .btn-danger { background-color: var(--danger); padding: 5px 10px; width: auto; font-size: 12px; margin: 0; }
+
+        .hidden { display: none; }
 
         .list-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #f0f2f5;
         }
-
         .list-item:last-child { border-bottom: none; }
-
-        .price-tag { color: #42b72a; font-weight: bold; }
         
-        .badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
+        .bkash-item {
+            background-color: #fff0f5;
+            padding: 10px;
+            margin: 4px -10px;
+            border-radius: 8px;
+            border-left: 4px solid var(--bkash-color);
         }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .summary-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .bg-cash { background: #e7f3ff; color: #1877f2; }
+        .bg-credit { background: #ffebe9; color: #f02849; }
+        .bg-bkash { background: #fff0f5; color: #D12053; }
+        .bg-total { background: #eafbea; color: #2b7d2b; grid-column: span 2; }
+
+        #memo-export-area {
+            background: #fff;
+            padding: 40px 30px;
+            border: 1px solid #ddd;
+            width: 100%;
+            box-sizing: border-box;
+            color: #000;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+        .memo-header { text-align: center; margin-bottom: 20px; }
+        .memo-title { font-size: 28px; font-weight: bold; margin: 0; }
+        .memo-sub { font-size: 14px; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+        .memo-meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px; }
+        .memo-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; flex-grow: 1; }
+        .memo-table th { background: #f2f2f2; border: 1px solid #000; padding: 8px; text-align: left; }
+        .memo-table td { border: 1px solid #000; padding: 8px; }
+        .memo-total-section { border-top: 2px solid #000; padding-top: 10px; text-align: right; }
+        .grand-total { font-size: 20px; font-weight: bold; }
+        .memo-signatures { margin-top: 60px; display: flex; justify-content: space-between; }
+        .sig-box { border-top: 1px solid #000; width: 150px; text-align: center; padding-top: 5px; font-size: 13px; }
+
+        .added-items-list { margin: 10px 0; font-size: 13px; background: #f9f9f9; padding: 10px; border-radius: 6px; }
+        .added-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #eee; }
+        
+        .badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .badge-cash { background: #e7f3ff; color: #1877f2; }
         .badge-credit { background: #ffebe9; color: #f02849; }
 
-        .status-bar {
-            text-align: center;
-            font-size: 12px;
-            color: #42b72a;
-            padding: 5px;
-            display: none;
-        }
-
-        .hidden { display: none; }
-
-        .btn-export {
-            background-color: #f0f2f5;
-            color: #1c1e21;
-            border: 1px solid var(--fb-border);
+        .total-input-group {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 8px;
             margin-top: 10px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
+            border: 1px solid var(--fb-blue);
         }
-
-        /* স্টোর ব্র্যান্ডিং স্টাইল */
-        .store-header {
-            text-align: center;
-            border-bottom: 2px solid var(--fb-blue);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-        .store-name {
-            margin: 0;
+        .total-input-group label {
+            display: block;
+            font-size: 12px;
             color: var(--fb-blue);
-            font-size: 24px;
-            font-weight: 800;
+            font-weight: bold;
+            margin-bottom: 4px;
         }
-        .store-info {
-            margin: 4px 0;
-            color: var(--fb-gray);
-            font-size: 14px;
-            font-weight: 600;
+        #sale-total-input {
+            background: #fff;
+            border: 2px solid var(--fb-blue);
+            font-size: 20px;
+            font-weight: bold;
+            color: #1877f2;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <div style="font-weight: bold; font-size: 1.2rem;">🛒 দোকান খাতা</div>
-    <div id="conn-status" style="font-size: 10px; background: #42b72a; padding: 2px 6px; border-radius: 10px;">সংযুক্ত</div>
+    <div style="font-weight: bold; font-size: 1.1rem;">🛒 দোকান খাতা</div>
+    <div id="conn-status" style="font-size: 10px; background: var(--success); padding: 2px 8px; border-radius: 12px; color: white;">অনলাইন</div>
 </header>
 
 <div class="nav-tabs">
-    <div class="nav-tab active" id="tab-btn-stock" onclick="showTab('stock')">পণ্য স্টক</div>
-    <div class="nav-tab" id="tab-btn-sales" onclick="showTab('sales')">বিক্রি করুন</div>
+    <div class="nav-tab active" id="tab-btn-stock" onclick="showTab('stock')">স্টক</div>
+    <div class="nav-tab" id="tab-btn-sales" onclick="showTab('sales')">বিক্রি</div>
     <div class="nav-tab" id="tab-btn-history" onclick="showTab('history')">হিসাব খাতা</div>
+    <div class="nav-tab" id="tab-btn-memo" onclick="showTab('memo')">মেমো</div>
 </div>
 
 <div class="container">
-    <div id="status-msg" class="status-bar">ডেটা সেভ করা হয়েছে!</div>
-
-    <!-- Stock Management -->
+    <!-- Stock Tab -->
     <div id="tab-stock" class="tab-content">
         <div class="card">
             <h2>নতুন পণ্য যোগ করুন</h2>
-            <input type="text" id="p-name" placeholder="পণ্যের নাম (যেমন: চিনি)">
+            <input type="text" id="p-name" placeholder="পণ্যের নাম">
             <input type="number" id="p-price" placeholder="বিক্রয় মূল্য (৳)">
-            <button onclick="saveProduct()">স্টক আপডেট করুন</button>
+            <button class="btn-add" onclick="saveProduct()">স্টকে যুক্ত করুন</button>
         </div>
         <div class="card">
-            <h2>বর্তমান পণ্যসমূহ</h2>
+            <h2>বর্তমান পণ্য তালিকা</h2>
             <div id="inventory-list">লোড হচ্ছে...</div>
         </div>
     </div>
 
-    <!-- Sales Management -->
+    <!-- Sales Tab -->
     <div id="tab-sales" class="tab-content hidden">
         <div class="card">
             <h2>বিক্রি এন্ট্রি</h2>
-            <select id="sale-prod-select">
+            <select id="sale-prod-select" onchange="onProductSelectChange()">
                 <option value="">পণ্য নির্বাচন করুন</option>
             </select>
-            <input type="number" id="sale-qty" placeholder="পরিমাণ (কেজি/পিস)">
-            <input type="text" id="cust-name" placeholder="ক্রেতার নাম">
-            
             <div style="display: flex; gap: 8px;">
-                <button onclick="recordTransaction('cash')" style="background-color: #42b72a; flex: 1;">নগদ বিক্রি</button>
-                <button onclick="recordTransaction('credit')" style="background-color: #f02849; flex: 1;">(বাকি)</button>
+                <input type="number" id="sale-qty" placeholder="পরিমাণ" oninput="calculateSaleTotal()">
+                <input type="number" id="sale-price" placeholder="দাম (৳)" oninput="calculateSaleTotal()">
+            </div>
+            <input type="text" id="cust-name-entry" placeholder="ক্রেতার নাম (বাকি হলে অবশ্যই দিন)">
+            
+            <div class="total-input-group">
+                <label>মোট টাকা (এটি ইডিট করা যাবে)</label>
+                <input type="number" id="sale-total-input" placeholder="মোট টাকা">
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 15px;">
+                <button onclick="recordTransaction('cash')" style="background-color: var(--success); flex: 1;">নগদ বিক্রি</button>
+                <button onclick="recordTransaction('credit')" style="background-color: var(--danger); flex: 1;">বাকি বিক্রি</button>
             </div>
         </div>
     </div>
 
-    <!-- Transaction History -->
+    <!-- History Tab -->
     <div id="tab-history" class="tab-content hidden">
-        <div class="card" id="export-area">
-            <!-- আপনার অনুরোধ করা স্টোর ব্র্যান্ডিং -->
-            <div class="store-header">
-                <h1 class="store-name">Mahira Store</h1>
-                <p class="store-info">Shopkeeper: Jobayer Khan</p>
-                <p class="store-info" style="font-size: 12px;">Time: Fajr - 11:00 am</p>
+        <div class="summary-grid">
+            <div class="summary-card bg-cash">
+                <div style="font-size: 12px;">নগদ বিক্রি (মাল)</div>
+                <div id="stat-cash" style="font-weight: bold; font-size: 18px;">০ ৳</div>
+            </div>
+            <div class="summary-card bg-credit">
+                <div style="font-size: 12px;">বাকি বিক্রি</div>
+                <div id="stat-credit" style="font-weight: bold; font-size: 18px;">০ ৳</div>
+            </div>
+            <!-- বিকাশ মোট বিক্রির নতুন কার্ড -->
+            <div class="summary-card bg-bkash" style="grid-column: span 2; margin-top: 0px;">
+                <div style="font-size: 14px;">বিকাশ মোট বিক্রি: <span id="stat-bkash" style="font-weight: bold;">০ ৳</span></div>
+            </div>
+            <div class="summary-card bg-total">
+                <div style="font-size: 14px;">সর্বমোট বিক্রি: <span id="stat-total" style="font-weight: bold;">০ ৳</span></div>
+            </div>
+        </div>
+        <div class="card" id="history-export-area">
+            <h2>বিস্তারিত হিসাব</h2>
+            <div id="history-list">কোনো লেনদেন পাওয়া যায়নি।</div>
+        </div>
+        <button onclick="exportAsImage('history-export-area', 'হিসাব-বিবরণী')" style="background-color: #65676B; margin-top: 10px;">
+            📷 হিসাবের ছবি সেভ করুন
+        </button>
+    </div>
+
+    <!-- Independent Memo Tab -->
+    <div id="tab-memo" class="tab-content hidden">
+        <div class="card">
+            <h2>ক্রেতা ও বিক্রেতার তথ্য</h2>
+            <input type="text" id="m-cust-name" placeholder="ক্রেতার নাম" oninput="updateMemoUI()">
+            <input type="text" id="m-seller-name" placeholder="বিক্রেতার নাম / প্রতিষ্ঠানের নাম" oninput="updateMemoUI()">
+            <input type="text" id="m-date" placeholder="তারিখ" oninput="updateMemoUI()">
+        </div>
+
+        <div class="card">
+            <h2>পণ্য যোগ করুন (মেমোর জন্য)</h2>
+            <input type="text" id="m-item-name" placeholder="পণ্যের নাম">
+            <div style="display: flex; gap: 8px;">
+                <input type="number" id="m-item-qty" placeholder="পরিমাণ">
+                <input type="number" id="m-item-rate" placeholder="দর (৳)">
+            </div>
+            <button class="btn-add" onclick="addMemoItem()">+ তালিকায় যোগ করুন</button>
+            <div id="added-items-container" class="added-items-list">
+                <i>এখনো কোনো পণ্য যোগ করা হয়নি</i>
+            </div>
+        </div>
+
+        <div class="card">
+            <select id="m-pay-type" onchange="updateMemoUI()">
+                <option value="নগদ">পেমেন্ট পদ্ধতি: নগদ</option>
+                <option value="বাকি">পেমেন্ট পদ্ধতি: বাকি</option>
+            </select>
+        </div>
+
+        <!-- Memo Preview Area -->
+        <div id="memo-export-area">
+            <div class="memo-header">
+                <div class="memo-title">ক্যাশ মেমো</div>
+                <div class="memo-sub">অরিজিনাল কপি</div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
-                <h2 style="margin:0;">সাম্প্রতিক লেনদেন</h2>
-                <span id="total-cash-today" style="font-size: 12px; font-weight: bold; color: #1877f2;"></span>
+            <div class="memo-meta">
+                <div>
+                    <div>ক্রেতা: <b id="p-cust">--</b></div>
+                    <div>পেমেন্ট: <span id="p-type">নগদ</span></div>
+                </div>
+                <div style="text-align: right;">
+                    <div>তারিখ: <span id="p-date">--</span></div>
+                    <div>মেমো নং: <span id="p-id">#0000</span></div>
+                </div>
             </div>
-            <div id="history-list">কোনো রেকর্ড নেই</div>
+
+            <table class="memo-table">
+                <thead>
+                    <tr>
+                        <th>বিবরণ</th>
+                        <th>পরিমাণ</th>
+                        <th>দর</th>
+                        <th style="text-align: right;">মোট</th>
+                    </tr>
+                </thead>
+                <tbody id="p-items-table">
+                    <!-- Products appear here -->
+                </tbody>
+            </table>
+
+            <div class="memo-total-section">
+                <div class="grand-total">সর্বমোট: <span id="p-grand-total">০</span> ৳</div>
+            </div>
+
+            <div class="memo-signatures">
+                <div class="sig-box">ক্রেতার স্বাক্ষর</div>
+                <div class="sig-box">
+                    <span id="p-seller-display">বিক্রেতার নাম</span><br>
+                    <small>(বিক্রেতার স্বাক্ষর)</small>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 30px; font-size: 12px; font-style: italic;">ধন্যবাদ, আবার আসবেন!</div>
         </div>
-        <button class="btn-export" onclick="exportAsImage()">
-            📷 ছবি হিসেবে সেভ করুন
+
+        <button onclick="exportAsImage('memo-export-area', 'মেমো')" style="background-color: var(--success); margin-top: 20px;">
+            📷 মেমো ছবি ডাউনলোড করুন
         </button>
     </div>
 </div>
 
 <script>
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyDgFaTrHW7Grp_Q22p6KNcHZxaEujHsLsE",
         authDomain: "exchange-project-d4028.firebaseapp.com",
@@ -247,57 +372,47 @@
         projectId: "exchange-project-d4028",
         storageBucket: "exchange-project-d4028.firebasestorage.app",
         messagingSenderId: "313976742479",
-        appId: "1:313976742479:web:45951b360d875c4768c03a",
-        measurementId: "G-PQMFYZS958"
+        appId: "1:313976742479:web:45951b360d875c4768c03a"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
-    
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'grocery-shop-01';
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'grocery-hisab-final';
 
     let inventoryData = {};
-
-    auth.signInAnonymously().catch(err => console.error("Auth Error", err));
-
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            document.getElementById('conn-status').innerText = "অনলাইন";
-            setupListeners();
-        } else {
-            document.getElementById('conn-status').innerText = "অফলাইন";
-            document.getElementById('conn-status').style.background = "#65676B";
-        }
-    });
+    let transactionData = {};
+    let memoProducts = []; 
 
     const invPath = `artifacts/${appId}/public/data/inventory`;
     const transPath = `artifacts/${appId}/public/data/transactions`;
 
-    function setupListeners() {
+    auth.signInAnonymously().catch(console.error);
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            setupRealtimeListeners();
+            initMemoTab();
+        }
+    });
+
+    function setupRealtimeListeners() {
         db.ref(invPath).on('value', snapshot => {
             inventoryData = snapshot.val() || {};
             renderInventory();
-            updateDropdown();
+            updateSalesDropdown();
         });
 
-        db.ref(transPath).limitToLast(50).on('value', snapshot => {
-            renderHistory(snapshot.val() || {});
+        db.ref(transPath).on('value', snapshot => {
+            transactionData = snapshot.val() || {};
+            renderHistory();
         });
     }
 
-    function showTab(tab) {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-        
-        document.getElementById('tab-' + tab).classList.remove('hidden');
-        document.getElementById('tab-btn-' + tab).classList.add('active');
-    }
-
+    // --- Stock Functions ---
     function saveProduct() {
         const name = document.getElementById('p-name').value;
         const price = document.getElementById('p-price').value;
-        if (!name || !price) return alert("সবগুলো ঘর পূরণ করুন");
+        if (!name || !price) return;
 
         db.ref(invPath).push({
             name: name,
@@ -306,115 +421,102 @@
         }).then(() => {
             document.getElementById('p-name').value = '';
             document.getElementById('p-price').value = '';
-            showMessage();
         });
     }
 
-    function recordTransaction(type) {
-        const prodId = document.getElementById('sale-prod-select').value;
-        const qty = document.getElementById('sale-qty').value;
-        const customer = document.getElementById('cust-name').value;
-
-        if (!prodId || !qty) return alert("পণ্য এবং পরিমাণ দিন");
-        if (type === 'credit' && !customer) return alert(" ক্রেতার নাম দিন");
-
-        const product = inventoryData[prodId];
-        const total = product.price * parseFloat(qty);
-
-        db.ref(transPath).push({
-            itemName: product.name,
-            qty: qty,
-            price: product.price,
-            total: total,
-            type: type,
-            buyer: customer || "নগদ ক্রেতা",
-            timestamp: Date.now()
-        }).then(() => {
-            document.getElementById('sale-qty').value = '';
-            document.getElementById('cust-name').value = '';
-            showMessage();
-            showTab('history');
-        });
+    function deleteProduct(id) {
+        if(confirm("এই পণ্যটি স্টক থেকে মুছে ফেলতে চান?")) {
+            db.ref(`${invPath}/${id}`).remove();
+        }
     }
 
     function renderInventory() {
         const list = document.getElementById('inventory-list');
         list.innerHTML = '';
         const keys = Object.keys(inventoryData).reverse();
-        if (keys.length === 0) list.innerHTML = "কোনো পণ্য নেই।";
+        if (keys.length === 0) list.innerHTML = "স্টক খালি।";
 
         keys.forEach(key => {
             const item = inventoryData[key];
             list.innerHTML += `
                 <div class="list-item">
-                    <span>${item.name}</span>
-                    <span class="price-tag">${item.price} ৳</span>
-                </div>
-            `;
+                    <div>
+                        <div style="font-weight:bold;">${item.name}</div>
+                        <div style="font-size:12px; color:var(--fb-gray);">মূল্য: ${item.price} ৳</div>
+                    </div>
+                    <button class="btn-danger" onclick="deleteProduct('${key}')">মুছে ফেলুন</button>
+                </div>`;
         });
     }
 
-    function updateDropdown() {
+    // --- Sales Functions ---
+    function updateSalesDropdown() {
         const select = document.getElementById('sale-prod-select');
-        select.innerHTML = '<option value="">পণ্য নির্বাচন করুন</option>';
+        select.innerHTML = `
+            <option value="">পণ্য নির্বাচন করুন</option>
+            <option value="hardcoded_bkash">বিকাশ</option>
+            <option value="hardcoded_nagad">নগদ (ব্যাংকিং)</option>
+        `;
         Object.keys(inventoryData).forEach(key => {
-            select.innerHTML += `<option value="${key}">${inventoryData[key].name} (${inventoryData[key].price} ৳)</option>`;
+            select.innerHTML += `<option value="${key}">${inventoryData[key].name}</option>`;
         });
     }
 
-    function renderHistory(data) {
-        const list = document.getElementById('history-list');
-        list.innerHTML = '';
-        const keys = Object.keys(data).sort((a, b) => data[b].timestamp - data[a].timestamp);
+    function onProductSelectChange() {
+        const prodId = document.getElementById('sale-prod-select').value;
         
-        let todayCash = 0;
-        keys.forEach(key => {
-            const t = data[key];
-            if (t.type === 'cash') todayCash += t.total;
-            const badge = t.type === 'cash' ? 
-                '<span class="badge badge-cash">নগদ</span>' : 
-                '<span class="badge badge-credit">বাকি</span>';
-            
-            list.innerHTML += `
-                <div class="list-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <strong>${t.itemName} (${t.qty})</strong>
-                        ${badge}
-                    </div>
-                    <div style="display: flex; justify-content: space-between; width: 100%; font-size: 13px; color: var(--fb-gray);">
-                        <span>ক্রেতা: ${t.buyer}</span>
-                        <span class="price-tag">${t.total} ৳</span>
-                    </div>
-                </div>
-            `;
-        });
-        document.getElementById('total-cash-today').innerText = "নগদ বিক্রি: " + todayCash + " ৳";
+        if (prodId === 'hardcoded_bkash' || prodId === 'hardcoded_nagad') {
+            document.getElementById('sale-qty').value = "1";
+            document.getElementById('sale-price').value = "";
+            document.getElementById('sale-total-input').value = "";
+            return;
+        }
+
+        if (prodId && inventoryData[prodId]) {
+            document.getElementById('sale-price').value = inventoryData[prodId].price;
+            document.getElementById('sale-qty').value = ""; 
+            calculateSaleTotal();
+        }
     }
 
-    function showMessage() {
-        const msg = document.getElementById('status-msg');
-        msg.style.display = 'block';
-        setTimeout(() => msg.style.display = 'none', 2000);
+    function calculateSaleTotal() {
+        const qty = parseFloat(document.getElementById('sale-qty').value) || 0;
+        const price = parseFloat(document.getElementById('sale-price').value) || 0;
+        const total = qty * price;
+        document.getElementById('sale-total-input').value = total;
     }
 
-    function exportAsImage() {
-        const element = document.getElementById('export-area');
-        
-        html2canvas(element, {
-            backgroundColor: "#FFFFFF",
-            scale: 2 
-        }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = 'MahiraStore-হিসাব-' + new Date().toLocaleDateString() + '.png';
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-        }).catch(err => {
-            console.error("Export Error:", err);
-            alert("ছবি তৈরি করতে সমস্যা হচ্ছে!");
-        });
-    }
-</script>
+    function recordTransaction(type) {
+        const prodId = document.getElementById('sale-prod-select').value;
+        const qty = document.getElementById('sale-qty').value;
+        const price = document.getElementById('sale-price').value;
+        const customer = document.getElementById('cust-name-entry').value;
+        const finalTotal = parseFloat(document.getElementById('sale-total-input').value) || 0;
 
-</body>
-</html>
+        if (!prodId || !qty || !price) {
+            alert("পণ্য, পরিমাণ এবং দাম সঠিকভাবে দিন।");
+            return;
+        }
+        if (type === 'credit' && !customer) {
+            alert("বাকি বিক্রির জন্য ক্রেতার নাম দিন।");
+            return;
+        }
 
+        let productName = "";
+        if (prodId === 'hardcoded_bkash') productName = "বিকাশ";
+        else if (prodId === 'hardcoded_nagad') productName = "নগদ (ব্যাংকিং)";
+        else productName = inventoryData[prodId].name;
+
+        db.ref(transPath).push({
+            itemName: productName,
+            qty: qty,
+            price: parseFloat(price),
+            total: finalTotal, 
+            type: type,
+            buyer: customer || "নগদ বিক্রয়",
+            date: new Date().toLocaleDateString('bn-BD'),
+            timestamp: Date.now()
+        }).then(() => {
+            document.getElementById('sale-qty').value = '';
+            document.getElementById('sale-price').value = '';
+            document.getElementById('cust-name-entry').value = '
