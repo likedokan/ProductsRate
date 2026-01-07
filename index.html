@@ -249,6 +249,15 @@
             max-width: 350px;
             text-align: center;
         }
+
+        /* Filter styling */
+        .history-filter-card {
+            background: var(--fb-white);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid var(--fb-blue);
+        }
     </style>
 </head>
 <body>
@@ -310,6 +319,21 @@
 
     <!-- History Tab -->
     <div id="tab-history" class="tab-content hidden">
+        <div class="history-filter-card">
+            <label style="font-size: 13px; font-weight: bold; color: var(--fb-blue);">হিসাব ফিল্টার করুন:</label>
+            <select id="history-time-filter" onchange="renderHistory()" style="margin-top: 5px; border-color: var(--fb-blue);">
+                <option value="all">সব সময়ের হিসাব</option>
+                <option value="0">আজ</option>
+                <option value="1">গতকাল</option>
+                <option value="2">২ দিন আগে</option>
+                <option value="3">৩ দিন আগে</option>
+                <option value="4">৪ দিন আগে</option>
+                <option value="5">৫ দিন আগে</option>
+                <option value="6">৬ দিন আগে</option>
+                <option value="7">১ সপ্তাহ আগে</option>
+            </select>
+        </div>
+
         <div class="summary-grid">
             <div class="summary-card bg-cash">
                 <div style="font-size: 12px;">নগদ বিক্রি (মাল)</div>
@@ -635,15 +659,23 @@
     // --- History Functions ---
     function renderHistory() {
         const list = document.getElementById('history-list');
+        const timeFilter = document.getElementById('history-time-filter').value;
         list.innerHTML = '';
         const allKeys = Object.keys(transactionData);
         
-        const bkashKeys = allKeys.filter(key => transactionData[key].itemName === 'বিকাশ')
-                                 .sort((a, b) => transactionData[b].timestamp - transactionData[a].timestamp);
-        const otherKeys = allKeys.filter(key => transactionData[key].itemName !== 'বিকাশ')
-                                 .sort((a, b) => transactionData[b].timestamp - transactionData[a].timestamp);
-        
-        const sortedKeys = [...bkashKeys, ...otherKeys];
+        let filteredKeys = allKeys;
+
+        // Logic for time filtering
+        if (timeFilter !== "all") {
+            const offset = parseInt(timeFilter);
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() - offset);
+            const targetDateString = targetDate.toLocaleDateString('bn-BD');
+            
+            filteredKeys = allKeys.filter(key => transactionData[key].date === targetDateString);
+        }
+
+        const sortedKeys = filteredKeys.sort((a, b) => transactionData[b].timestamp - transactionData[a].timestamp);
         
         let totalCash = 0;
         let totalCredit = 0;
@@ -659,8 +691,6 @@
 
                 if (isBkash) {
                     totalBkash += t.total;
-                } else if (isBankingNagad) {
-                    if (t.type === 'cash') totalCash += t.total; else totalCredit += t.total;
                 } else {
                     if (t.type === 'cash') totalCash += t.total; else totalCredit += t.total;
                 }
