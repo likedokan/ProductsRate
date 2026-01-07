@@ -249,15 +249,6 @@
             max-width: 350px;
             text-align: center;
         }
-
-        /* Filter styling */
-        .history-filter-card {
-            background: var(--fb-white);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
-            border: 1px solid var(--fb-blue);
-        }
     </style>
 </head>
 <body>
@@ -306,7 +297,7 @@
             <input type="text" id="cust-name-entry" placeholder="ক্রেতার নাম (বাকি হলে অবশ্যই দিন)">
             
             <div class="total-input-group">
-                <label>মোট টাকা (এটি ইডিট করা যাবে)</label>
+                <label id="total-label">মোট টাকা (এটি ইডিট করা যাবে)</label>
                 <input type="number" id="sale-total-input" placeholder="মোট টাকা">
             </div>
 
@@ -319,7 +310,8 @@
 
     <!-- History Tab -->
     <div id="tab-history" class="tab-content hidden">
-        <div class="history-filter-card">
+        <!-- Date/Time Filter Option -->
+        <div class="card" style="border: 1px solid var(--fb-blue);">
             <label style="font-size: 13px; font-weight: bold; color: var(--fb-blue);">হিসাব ফিল্টার করুন:</label>
             <select id="history-time-filter" onchange="renderHistory()" style="margin-top: 5px; border-color: var(--fb-blue);">
                 <option value="all">সব সময়ের হিসাব</option>
@@ -344,10 +336,10 @@
                 <div id="stat-credit" style="font-weight: bold; font-size: 18px;">০ ৳</div>
             </div>
             <div class="summary-card bg-bkash" style="grid-column: span 2; margin-top: 0px;">
-                <div style="font-size: 14px;">বিকাশ মোট বিক্রি: <span id="stat-bkash" style="font-weight: bold;">০ ৳</span></div>
+                <div style="font-size: 14px;">ব্যাংকিং মোট বিক্রি: <span id="stat-bkash" style="font-weight: bold;">০ রিয়াল</span></div>
             </div>
             <div class="summary-card bg-total">
-                <div style="font-size: 14px;">সর্বমোট বিক্রি: <span id="stat-total" style="font-weight: bold;">০ ৳</span></div>
+                <div style="font-size: 14px;">সর্বমোট লেনদেন: <span id="stat-total" style="font-weight: bold;">০</span></div>
             </div>
         </div>
         <div class="card" id="history-export-area">
@@ -591,25 +583,47 @@
 
     function onProductSelectChange() {
         const prodId = document.getElementById('sale-prod-select').value;
-        
+        const qtyInput = document.getElementById('sale-qty');
+        const priceInput = document.getElementById('sale-price');
+        const totalLabel = document.getElementById('total-label');
+        const totalInput = document.getElementById('sale-total-input');
+
+        // Reset
+        qtyInput.value = "";
+        priceInput.value = "";
+        totalInput.value = "";
+
         if (prodId === 'hardcoded_bkash' || prodId === 'hardcoded_nagad') {
-            document.getElementById('sale-qty').value = "1";
-            document.getElementById('sale-price').value = "";
-            document.getElementById('sale-total-input').value = "";
+            qtyInput.placeholder = "টাকা (BDT)";
+            priceInput.placeholder = "রেট";
+            totalLabel.innerText = "মোট রিয়াল (SAR)";
             return;
         }
 
+        qtyInput.placeholder = "পরিমাণ";
+        priceInput.placeholder = "দাম (৳)";
+        totalLabel.innerText = "মোট টাকা (এটি ইডিট করা যাবে)";
+
         if (prodId && inventoryData[prodId]) {
-            document.getElementById('sale-price').value = inventoryData[prodId].price;
-            document.getElementById('sale-qty').value = ""; 
+            priceInput.value = inventoryData[prodId].price;
             calculateSaleTotal();
         }
     }
 
     function calculateSaleTotal() {
+        const prodId = document.getElementById('sale-prod-select').value;
         const qty = parseFloat(document.getElementById('sale-qty').value) || 0;
         const price = parseFloat(document.getElementById('sale-price').value) || 0;
-        const total = qty * price;
+        let total = 0;
+
+        if (prodId === 'hardcoded_bkash' || prodId === 'hardcoded_nagad') {
+            if (price > 0) {
+                total = (qty / price).toFixed(2);
+            }
+        } else {
+            total = qty * price;
+        }
+        
         document.getElementById('sale-total-input').value = total;
     }
 
@@ -625,7 +639,7 @@
             return;
         }
         if (type === 'credit' && !customer) {
-            showToast("বাকি বিক্রির জন্য ক্রেতার নাম অবশ্যই দিন।", 'error');
+            showToast("ক্রেতার নাম অবশ্যই দিন।", 'error');
             return;
         }
 
@@ -644,11 +658,8 @@
             date: new Date().toLocaleDateString('bn-BD'),
             timestamp: Date.now()
         }).then(() => {
-            document.getElementById('sale-qty').value = '';
-            document.getElementById('sale-price').value = '';
+            onProductSelectChange();
             document.getElementById('cust-name-entry').value = '';
-            document.getElementById('sale-total-input').value = '';
-            document.getElementById('sale-prod-select').value = '';
             showToast("বিক্রি সফলভাবে রেকর্ড করা হয়েছে!");
             showTab('history');
         }).catch(err => {
@@ -665,13 +676,12 @@
         
         let filteredKeys = allKeys;
 
-        // Logic for time filtering
+        // Time Filtering Logic
         if (timeFilter !== "all") {
             const offset = parseInt(timeFilter);
             const targetDate = new Date();
             targetDate.setDate(targetDate.getDate() - offset);
             const targetDateString = targetDate.toLocaleDateString('bn-BD');
-            
             filteredKeys = allKeys.filter(key => transactionData[key].date === targetDateString);
         }
 
@@ -679,45 +689,45 @@
         
         let totalCash = 0;
         let totalCredit = 0;
-        let totalBkash = 0;
+        let totalBkashRial = 0;
 
         if (sortedKeys.length === 0) {
             list.innerHTML = "কোনো লেনদেন পাওয়া যায়নি।";
         } else {
             sortedKeys.forEach(key => {
                 const t = transactionData[key];
-                const isBkash = t.itemName === 'বিকাশ';
-                const isBankingNagad = t.itemName === 'নগদ (ব্যাংকিং)';
-
-                if (isBkash) {
-                    totalBkash += t.total;
+                const isBanking = (t.itemName === 'বিকাশ' || t.itemName === 'নগদ (ব্যাংকিং)');
+                
+                if (isBanking) {
+                    totalBkashRial += t.total;
                 } else {
                     if (t.type === 'cash') totalCash += t.total; else totalCredit += t.total;
                 }
                 
                 const badgeClass = t.type === 'cash' ? 'badge-cash' : 'badge-credit';
                 const typeText = t.type === 'cash' ? 'নগদ' : 'বাকি';
+                const currency = isBanking ? "রিয়াল" : "৳";
 
                 list.innerHTML += `
-                    <div class="list-item ${isBkash ? 'bkash-item' : ''}">
+                    <div class="list-item ${t.itemName === 'বিকাশ' ? 'bkash-item' : ''}">
                         <div style="flex: 2;">
-                            <div style="font-weight: bold; ${isBkash ? 'color: var(--bkash-color);' : ''}">
-                                ${t.itemName} <small>(${t.qty} x ${t.price}৳)</small>
+                            <div style="font-weight: bold; ${t.itemName === 'বিকাশ' ? 'color: var(--bkash-color);' : ''}">
+                                ${t.itemName} <small>(${t.qty} x ${t.price}${isBanking ? ' রেট' : currency})</small>
                             </div>
                             <div style="font-size: 11px; color: var(--fb-gray);">${t.buyer} | ${t.date}</div>
                         </div>
                         <div style="text-align: right; flex: 1;">
-                            <div style="font-weight: bold; color: #333;">${t.total} ৳</div>
+                            <div style="font-weight: bold; color: #333;">${t.total} ${currency}</div>
                             <span class="badge ${badgeClass}">${typeText}</span>
                         </div>
                     </div>`;
             });
         }
 
-        document.getElementById('stat-cash').innerText = totalCash + " ৳";
-        document.getElementById('stat-credit').innerText = totalCredit + " ৳";
-        document.getElementById('stat-bkash').innerText = totalBkash + " ৳"; 
-        document.getElementById('stat-total').innerText = (totalCash + totalCredit + totalBkash) + " ৳";
+        document.getElementById('stat-cash').innerText = totalCash.toFixed(2) + " ৳";
+        document.getElementById('stat-credit').innerText = totalCredit.toFixed(2) + " ৳";
+        document.getElementById('stat-bkash').innerText = totalBkashRial.toFixed(2) + " রিয়াল"; 
+        document.getElementById('stat-total').innerText = sortedKeys.length + " টি";
     }
 
     // --- Independent Memo Tab Logic ---
@@ -778,7 +788,7 @@
             </tr>`).join('');
 
         const grandTotal = memoProducts.reduce((sum, i) => sum + i.total, 0);
-        document.getElementById('p-grand-total').innerText = grandTotal;
+        document.getElementById('p-grand-total').innerText = grandTotal.toFixed(2);
     }
 
     // --- Navigation ---
