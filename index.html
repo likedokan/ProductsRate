@@ -146,6 +146,38 @@
         .bg-bkash { background: #fff0f5; color: #D12053; }
         .bg-total { background: #eafbea; color: #2b7d2b; grid-column: span 2; }
 
+        /* Toast Notification Styles */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            width: 90%;
+            max-width: 400px;
+        }
+        .toast {
+            background: #333;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            font-size: 14px;
+            text-align: center;
+            animation: slideUp 0.3s ease-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .toast-success { background: var(--success); }
+        .toast-error { background: var(--danger); }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         #memo-export-area {
             background: #fff;
             padding: 40px 30px;
@@ -198,6 +230,25 @@
             color: #1877f2;
             text-align: center;
         }
+
+        /* Modal for Confirmation */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 350px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -206,6 +257,9 @@
     <div style="font-weight: bold; font-size: 1.1rem;">🛒 দোকান খাতা</div>
     <div id="conn-status" style="font-size: 10px; background: var(--success); padding: 2px 8px; border-radius: 12px; color: white;">অনলাইন</div>
 </header>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
 
 <div class="nav-tabs">
     <div class="nav-tab active" id="tab-btn-stock" onclick="showTab('stock')">স্টক</div>
@@ -265,7 +319,6 @@
                 <div style="font-size: 12px;">বাকি বিক্রি</div>
                 <div id="stat-credit" style="font-weight: bold; font-size: 18px;">০ ৳</div>
             </div>
-            <!-- বিকাশ মোট বিক্রির নতুন কার্ড -->
             <div class="summary-card bg-bkash" style="grid-column: span 2; margin-top: 0px;">
                 <div style="font-size: 14px;">বিকাশ মোট বিক্রি: <span id="stat-bkash" style="font-weight: bold;">০ ৳</span></div>
             </div>
@@ -387,7 +440,45 @@
     const invPath = `artifacts/${appId}/public/data/inventory`;
     const transPath = `artifacts/${appId}/public/data/transactions`;
 
-    auth.signInAnonymously().catch(console.error);
+    // --- Toast Logic ---
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerText = message;
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
+    }
+
+    // --- Custom Confirm Logic ---
+    function customConfirm(message, callback) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-content">
+                <p style="margin-bottom: 20px;">${message}</p>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="this.closest('.modal-overlay').remove()" style="background:#65676B;">না</button>
+                    <button id="modal-confirm-btn" style="background:var(--danger);">হ্যাঁ, মুছে ফেলুন</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        document.getElementById('modal-confirm-btn').onclick = () => {
+            overlay.remove();
+            callback();
+        };
+    }
+
+    auth.signInAnonymously().catch(err => {
+        showToast("ডাটাবেজ কানেকশন সমস্যা: " + err.message, 'error');
+    });
+
     auth.onAuthStateChanged(user => {
         if (user) {
             setupRealtimeListeners();
@@ -400,11 +491,15 @@
             inventoryData = snapshot.val() || {};
             renderInventory();
             updateSalesDropdown();
+        }, err => {
+            showToast("ডাটা লোড করতে সমস্যা: " + err.message, 'error');
         });
 
         db.ref(transPath).on('value', snapshot => {
             transactionData = snapshot.val() || {};
             renderHistory();
+        }, err => {
+            showToast("হিসাব লোড করতে সমস্যা: " + err.message, 'error');
         });
     }
 
@@ -412,7 +507,10 @@
     function saveProduct() {
         const name = document.getElementById('p-name').value;
         const price = document.getElementById('p-price').value;
-        if (!name || !price) return;
+        if (!name || !price) {
+            showToast("অনুগ্রহ করে নাম এবং মূল্য দিন", 'error');
+            return;
+        }
 
         db.ref(invPath).push({
             name: name,
@@ -421,13 +519,18 @@
         }).then(() => {
             document.getElementById('p-name').value = '';
             document.getElementById('p-price').value = '';
+            showToast("পণ্য স্টকে যোগ করা হয়েছে!");
+        }).catch(err => {
+            showToast("পণ্য যোগ করতে ব্যর্থ: " + err.message, 'error');
         });
     }
 
     function deleteProduct(id) {
-        if(confirm("এই পণ্যটি স্টক থেকে মুছে ফেলতে চান?")) {
-            db.ref(`${invPath}/${id}`).remove();
-        }
+        customConfirm("এই পণ্যটি কি সত্যিই মুছে ফেলতে চান?", () => {
+            db.ref(`${invPath}/${id}`).remove()
+                .then(() => showToast("পণ্যটি মুছে ফেলা হয়েছে"))
+                .catch(err => showToast("মুছে ফেলতে সমস্যা হয়েছে", 'error'));
+        });
     }
 
     function renderInventory() {
@@ -494,11 +597,11 @@
         const finalTotal = parseFloat(document.getElementById('sale-total-input').value) || 0;
 
         if (!prodId || !qty || !price) {
-            alert("পণ্য, পরিমাণ এবং দাম সঠিকভাবে দিন।");
+            showToast("পণ্য, পরিমাণ এবং দাম সঠিকভাবে দিন।", 'error');
             return;
         }
         if (type === 'credit' && !customer) {
-            alert("বাকি বিক্রির জন্য ক্রেতার নাম দিন।");
+            showToast("বাকি বিক্রির জন্য ক্রেতার নাম অবশ্যই দিন।", 'error');
             return;
         }
 
@@ -519,4 +622,160 @@
         }).then(() => {
             document.getElementById('sale-qty').value = '';
             document.getElementById('sale-price').value = '';
-            document.getElementById('cust-name-entry').value = '
+            document.getElementById('cust-name-entry').value = '';
+            document.getElementById('sale-total-input').value = '';
+            document.getElementById('sale-prod-select').value = '';
+            showToast("বিক্রি সফলভাবে রেকর্ড করা হয়েছে!");
+            showTab('history');
+        }).catch(err => {
+            showToast("বিক্রি রেকর্ড করতে সমস্যা: " + err.message, 'error');
+        });
+    }
+
+    // --- History Functions ---
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        const allKeys = Object.keys(transactionData);
+        
+        const bkashKeys = allKeys.filter(key => transactionData[key].itemName === 'বিকাশ')
+                                 .sort((a, b) => transactionData[b].timestamp - transactionData[a].timestamp);
+        const otherKeys = allKeys.filter(key => transactionData[key].itemName !== 'বিকাশ')
+                                 .sort((a, b) => transactionData[b].timestamp - transactionData[a].timestamp);
+        
+        const sortedKeys = [...bkashKeys, ...otherKeys];
+        
+        let totalCash = 0;
+        let totalCredit = 0;
+        let totalBkash = 0;
+
+        if (sortedKeys.length === 0) {
+            list.innerHTML = "কোনো লেনদেন পাওয়া যায়নি।";
+        } else {
+            sortedKeys.forEach(key => {
+                const t = transactionData[key];
+                const isBkash = t.itemName === 'বিকাশ';
+                const isBankingNagad = t.itemName === 'নগদ (ব্যাংকিং)';
+
+                if (isBkash) {
+                    totalBkash += t.total;
+                } else if (isBankingNagad) {
+                    if (t.type === 'cash') totalCash += t.total; else totalCredit += t.total;
+                } else {
+                    if (t.type === 'cash') totalCash += t.total; else totalCredit += t.total;
+                }
+                
+                const badgeClass = t.type === 'cash' ? 'badge-cash' : 'badge-credit';
+                const typeText = t.type === 'cash' ? 'নগদ' : 'বাকি';
+
+                list.innerHTML += `
+                    <div class="list-item ${isBkash ? 'bkash-item' : ''}">
+                        <div style="flex: 2;">
+                            <div style="font-weight: bold; ${isBkash ? 'color: var(--bkash-color);' : ''}">
+                                ${t.itemName} <small>(${t.qty} x ${t.price}৳)</small>
+                            </div>
+                            <div style="font-size: 11px; color: var(--fb-gray);">${t.buyer} | ${t.date}</div>
+                        </div>
+                        <div style="text-align: right; flex: 1;">
+                            <div style="font-weight: bold; color: #333;">${t.total} ৳</div>
+                            <span class="badge ${badgeClass}">${typeText}</span>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        document.getElementById('stat-cash').innerText = totalCash + " ৳";
+        document.getElementById('stat-credit').innerText = totalCredit + " ৳";
+        document.getElementById('stat-bkash').innerText = totalBkash + " ৳"; 
+        document.getElementById('stat-total').innerText = (totalCash + totalCredit + totalBkash) + " ৳";
+    }
+
+    // --- Independent Memo Tab Logic ---
+    function initMemoTab() {
+        document.getElementById('m-date').value = new Date().toLocaleDateString('bn-BD');
+        document.getElementById('p-id').innerText = "#" + Math.floor(1000 + Math.random() * 9000);
+        updateMemoUI();
+    }
+
+    function addMemoItem() {
+        const name = document.getElementById('m-item-name').value;
+        const qty = parseFloat(document.getElementById('m-item-qty').value);
+        const rate = parseFloat(document.getElementById('m-item-rate').value);
+
+        if (!name || isNaN(qty) || isNaN(rate)) {
+            showToast("মেমোর পণ্যের তথ্য সঠিক নয়", 'error');
+            return;
+        }
+
+        memoProducts.push({
+            id: Date.now(),
+            name, qty, rate, total: qty * rate
+        });
+
+        document.getElementById('m-item-name').value = '';
+        document.getElementById('m-item-qty').value = '';
+        document.getElementById('m-item-rate').value = '';
+        updateMemoUI();
+        showToast("মেমোতে পণ্য যোগ হয়েছে");
+    }
+
+    function removeMemoItem(id) {
+        memoProducts = memoProducts.filter(i => i.id !== id);
+        updateMemoUI();
+        showToast("পণ্যটি মেমো থেকে বাদ দেওয়া হয়েছে");
+    }
+
+    function updateMemoUI() {
+        document.getElementById('p-cust').innerText = document.getElementById('m-cust-name').value || '--';
+        document.getElementById('p-seller-display').innerText = document.getElementById('m-seller-name').value || 'বিক্রেতার নাম';
+        document.getElementById('p-date').innerText = document.getElementById('m-date').value || '--';
+        document.getElementById('p-type').innerText = document.getElementById('m-pay-type').value;
+
+        const listContainer = document.getElementById('added-items-container');
+        listContainer.innerHTML = memoProducts.length ? memoProducts.map(i => `
+            <div class="added-item">
+                <span>${i.name} (${i.qty} x ${i.rate}৳)</span>
+                <button class="btn-danger" onclick="removeMemoItem(${i.id})">বাদ</button>
+            </div>`).join('') : '<i>এখনো কোনো পণ্য যোগ করা হয়নি</i>';
+
+        const tableBody = document.getElementById('p-items-table');
+        tableBody.innerHTML = memoProducts.map(i => `
+            <tr>
+                <td>${i.name}</td>
+                <td>${i.qty}</td>
+                <td>${i.rate}</td>
+                <td style="text-align: right;">${i.total} ৳</td>
+            </tr>`).join('');
+
+        const grandTotal = memoProducts.reduce((sum, i) => sum + i.total, 0);
+        document.getElementById('p-grand-total').innerText = grandTotal;
+    }
+
+    // --- Navigation ---
+    function showTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.remove('hidden');
+        document.getElementById('tab-btn-' + tab).classList.add('active');
+    }
+
+    // --- Export Function ---
+    function exportAsImage(divId, fileName) {
+        const element = document.getElementById(divId);
+        showToast("ছবি প্রসেসিং হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...");
+        
+        html2canvas(element, { backgroundColor: "#FFFFFF", scale: 2 }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = fileName + '-' + Date.now() + '.png';
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+            showToast("ছবিটি সফলভাবে ডাউনলোড হয়েছে!");
+        }).catch(err => {
+            showToast("ছবি সেভ করতে সমস্যা হয়েছে: " + err.message, 'error');
+        });
+    }
+</script>
+
+</body>
+</html>
+
