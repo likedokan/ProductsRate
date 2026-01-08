@@ -146,7 +146,29 @@
         .bg-bkash { background: #fff0f5; color: #D12053; }
         .bg-total { background: #eafbea; color: #2b7d2b; grid-column: span 2; }
 
-        /* Toast Notification Styles */
+        /* Export Summary Style */
+        .export-header {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .export-header .date-day {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--fb-blue);
+            margin-bottom: 8px;
+        }
+        .export-header .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+            font-size: 14px;
+        }
+
         #toast-container {
             position: fixed;
             bottom: 20px;
@@ -231,7 +253,6 @@
             text-align: center;
         }
 
-        /* Modal for Confirmation */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -258,7 +279,6 @@
     <div id="conn-status" style="font-size: 10px; background: var(--success); padding: 2px 8px; border-radius: 12px; color: white;">অনলাইন</div>
 </header>
 
-<!-- Toast Container -->
 <div id="toast-container"></div>
 
 <div class="nav-tabs">
@@ -310,7 +330,6 @@
 
     <!-- History Tab -->
     <div id="tab-history" class="tab-content hidden">
-        <!-- Date/Time Filter Option -->
         <div class="card" style="border: 1px solid var(--fb-blue);">
             <label style="font-size: 13px; font-weight: bold; color: var(--fb-blue);">হিসাব ফিল্টার করুন:</label>
             <select id="history-time-filter" onchange="renderHistory()" style="margin-top: 5px; border-color: var(--fb-blue);">
@@ -335,17 +354,28 @@
                 <div style="font-size: 12px;">বাকি বিক্রি</div>
                 <div id="stat-credit" style="font-weight: bold; font-size: 18px;">০ ৳</div>
             </div>
-            <div class="summary-card bg-bkash" style="grid-column: span 2; margin-top: 0px;">
+            <div class="summary-card bg-bkash" style="grid-column: span 2;">
                 <div style="font-size: 14px;">ব্যাংকিং মোট বিক্রি: <span id="stat-bkash" style="font-weight: bold;">০ রিয়াল</span></div>
             </div>
             <div class="summary-card bg-total">
                 <div style="font-size: 14px;">সর্বমোট লেনদেন: <span id="stat-total" style="font-weight: bold;">০</span></div>
             </div>
         </div>
-        <div class="card" id="history-export-area">
-            <h2>বিস্তারিত হিসাব</h2>
+
+        <!-- History Area to Export -->
+        <div class="card" id="history-export-area" style="padding: 20px;">
+            <div class="export-header" id="export-summary-box">
+                <div class="date-day" id="export-date-display">তারিখ: -- | বার: --</div>
+                <div class="summary-stats">
+                    <div style="color: #1877f2;">মোট নগদ: <b id="export-cash-total">০ ৳</b></div>
+                    <div style="color: #D12053;">মোট রিয়াল: <b id="export-rial-total">০ রিয়াল</b></div>
+                </div>
+            </div>
+            <h2>বিস্তারিত হিসাব বিবরণী</h2>
             <div id="history-list">কোনো লেনদেন পাওয়া যায়নি।</div>
+            <div style="text-align: center; margin-top: 20px; font-size: 10px; color: #999;">তৈরি করা হয়েছে: দোকান খাতা ডিজিটাল অ্যাপ</div>
         </div>
+
         <button onclick="exportAsImage('history-export-area', 'হিসাব-বিবরণী')" style="background-color: #65676B; margin-top: 10px;">
             📷 হিসাবের ছবি সেভ করুন
         </button>
@@ -380,7 +410,6 @@
             </select>
         </div>
 
-        <!-- Memo Preview Area -->
         <div id="memo-export-area">
             <div class="memo-header">
                 <div class="memo-title">ক্যাশ মেমো</div>
@@ -408,7 +437,6 @@
                     </tr>
                 </thead>
                 <tbody id="p-items-table">
-                    <!-- Products appear here -->
                 </tbody>
             </table>
 
@@ -456,22 +484,18 @@
     const invPath = `artifacts/${appId}/public/data/inventory`;
     const transPath = `artifacts/${appId}/public/data/transactions`;
 
-    // --- Toast Logic ---
     function showToast(message, type = 'success') {
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         toast.innerText = message;
-        
         container.appendChild(toast);
-        
         setTimeout(() => {
             toast.style.opacity = '0';
             setTimeout(() => toast.remove(), 500);
         }, 3000);
     }
 
-    // --- Custom Confirm Logic ---
     function customConfirm(message, callback) {
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -492,7 +516,7 @@
     }
 
     auth.signInAnonymously().catch(err => {
-        showToast("ডাটাবেজ কানেকশন সমস্যা: " + err.message, 'error');
+        showToast("ডাটাবেজ কানেকশন সমস্যা", 'error');
     });
 
     auth.onAuthStateChanged(user => {
@@ -507,27 +531,21 @@
             inventoryData = snapshot.val() || {};
             renderInventory();
             updateSalesDropdown();
-        }, err => {
-            showToast("ডাটা লোড করতে সমস্যা: " + err.message, 'error');
         });
 
         db.ref(transPath).on('value', snapshot => {
             transactionData = snapshot.val() || {};
             renderHistory();
-        }, err => {
-            showToast("হিসাব লোড করতে সমস্যা: " + err.message, 'error');
         });
     }
 
-    // --- Stock Functions ---
     function saveProduct() {
         const name = document.getElementById('p-name').value;
         const price = document.getElementById('p-price').value;
         if (!name || !price) {
-            showToast("অনুগ্রহ করে নাম এবং মূল্য দিন", 'error');
+            showToast("নাম ও মূল্য দিন", 'error');
             return;
         }
-
         db.ref(invPath).push({
             name: name,
             price: parseFloat(price),
@@ -535,17 +553,13 @@
         }).then(() => {
             document.getElementById('p-name').value = '';
             document.getElementById('p-price').value = '';
-            showToast("পণ্য স্টকে যোগ করা হয়েছে!");
-        }).catch(err => {
-            showToast("পণ্য যোগ করতে ব্যর্থ: " + err.message, 'error');
+            showToast("পণ্য যোগ হয়েছে");
         });
     }
 
     function deleteProduct(id) {
-        customConfirm("এই পণ্যটি কি সত্যিই মুছে ফেলতে চান?", () => {
-            db.ref(`${invPath}/${id}`).remove()
-                .then(() => showToast("পণ্যটি মুছে ফেলা হয়েছে"))
-                .catch(err => showToast("মুছে ফেলতে সমস্যা হয়েছে", 'error'));
+        customConfirm("মুছে ফেলতে চান?", () => {
+            db.ref(`${invPath}/${id}`).remove().then(() => showToast("মুছে ফেলা হয়েছে"));
         });
     }
 
@@ -554,7 +568,6 @@
         list.innerHTML = '';
         const keys = Object.keys(inventoryData).reverse();
         if (keys.length === 0) list.innerHTML = "স্টক খালি।";
-
         keys.forEach(key => {
             const item = inventoryData[key];
             list.innerHTML += `
@@ -568,7 +581,6 @@
         });
     }
 
-    // --- Sales Functions ---
     function updateSalesDropdown() {
         const select = document.getElementById('sale-prod-select');
         select.innerHTML = `
@@ -588,7 +600,6 @@
         const totalLabel = document.getElementById('total-label');
         const totalInput = document.getElementById('sale-total-input');
 
-        // Reset
         qtyInput.value = "";
         priceInput.value = "";
         totalInput.value = "";
@@ -602,7 +613,7 @@
 
         qtyInput.placeholder = "পরিমাণ";
         priceInput.placeholder = "দাম (৳)";
-        totalLabel.innerText = "মোট টাকা (এটি ইডিট করা যাবে)";
+        totalLabel.innerText = "মোট টাকা (ইডিটযোগ্য)";
 
         if (prodId && inventoryData[prodId]) {
             priceInput.value = inventoryData[prodId].price;
@@ -615,15 +626,11 @@
         const qty = parseFloat(document.getElementById('sale-qty').value) || 0;
         const price = parseFloat(document.getElementById('sale-price').value) || 0;
         let total = 0;
-
         if (prodId === 'hardcoded_bkash' || prodId === 'hardcoded_nagad') {
-            if (price > 0) {
-                total = (qty / price).toFixed(2);
-            }
+            if (price > 0) total = (qty / price).toFixed(2);
         } else {
             total = qty * price;
         }
-        
         document.getElementById('sale-total-input').value = total;
     }
 
@@ -635,11 +642,11 @@
         const finalTotal = parseFloat(document.getElementById('sale-total-input').value) || 0;
 
         if (!prodId || !qty || !price) {
-            showToast("পণ্য, পরিমাণ এবং দাম সঠিকভাবে দিন।", 'error');
+            showToast("তথ্য সঠিকভাবে দিন", 'error');
             return;
         }
         if (type === 'credit' && !customer) {
-            showToast("ক্রেতার নাম অবশ্যই দিন।", 'error');
+            showToast("ক্রেতার নাম দিন", 'error');
             return;
         }
 
@@ -660,30 +667,41 @@
         }).then(() => {
             onProductSelectChange();
             document.getElementById('cust-name-entry').value = '';
-            showToast("বিক্রি সফলভাবে রেকর্ড করা হয়েছে!");
+            showToast("বিক্রি সফল");
             showTab('history');
-        }).catch(err => {
-            showToast("বিক্রি রেকর্ড করতে সমস্যা: " + err.message, 'error');
         });
     }
 
-    // --- History Functions ---
+    function getBanglaDay(dateObj) {
+        const days = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+        return days[dateObj.getDay()];
+    }
+
     function renderHistory() {
         const list = document.getElementById('history-list');
         const timeFilter = document.getElementById('history-time-filter').value;
+        const exportDateDisplay = document.getElementById('export-date-display');
+        
         list.innerHTML = '';
         const allKeys = Object.keys(transactionData);
-        
         let filteredKeys = allKeys;
 
-        // Time Filtering Logic
+        let displayDate = "--";
+        let displayDay = "--";
+
         if (timeFilter !== "all") {
             const offset = parseInt(timeFilter);
             const targetDate = new Date();
             targetDate.setDate(targetDate.getDate() - offset);
-            const targetDateString = targetDate.toLocaleDateString('bn-BD');
-            filteredKeys = allKeys.filter(key => transactionData[key].date === targetDateString);
+            displayDate = targetDate.toLocaleDateString('bn-BD');
+            displayDay = getBanglaDay(targetDate);
+            filteredKeys = allKeys.filter(key => transactionData[key].date === displayDate);
+        } else {
+            displayDate = "সব সময়ের রেকর্ড";
+            displayDay = "---";
         }
+
+        exportDateDisplay.innerText = `তারিখ: ${displayDate} | বার: ${displayDay}`;
 
         const sortedKeys = filteredKeys.sort((a, b) => transactionData[b].timestamp - transactionData[a].timestamp);
         
@@ -697,17 +715,13 @@
             sortedKeys.forEach(key => {
                 const t = transactionData[key];
                 const isBanking = (t.itemName === 'বিকাশ' || t.itemName === 'নগদ (ব্যাংকিং)');
-                
-                if (isBanking) {
-                    totalBkashRial += t.total;
-                } else {
+                if (isBanking) totalBkashRial += t.total;
+                else {
                     if (t.type === 'cash') totalCash += t.total; else totalCredit += t.total;
                 }
-                
                 const badgeClass = t.type === 'cash' ? 'badge-cash' : 'badge-credit';
                 const typeText = t.type === 'cash' ? 'নগদ' : 'বাকি';
                 const currency = isBanking ? "রিয়াল" : "৳";
-
                 list.innerHTML += `
                     <div class="list-item ${t.itemName === 'বিকাশ' ? 'bkash-item' : ''}">
                         <div style="flex: 2;">
@@ -728,9 +742,12 @@
         document.getElementById('stat-credit').innerText = totalCredit.toFixed(2) + " ৳";
         document.getElementById('stat-bkash').innerText = totalBkashRial.toFixed(2) + " রিয়াল"; 
         document.getElementById('stat-total').innerText = sortedKeys.length + " টি";
+
+        // Update Export Box Summary
+        document.getElementById('export-cash-total').innerText = totalCash.toFixed(2) + " ৳";
+        document.getElementById('export-rial-total').innerText = totalBkashRial.toFixed(2) + " রিয়াল";
     }
 
-    // --- Independent Memo Tab Logic ---
     function initMemoTab() {
         document.getElementById('m-date').value = new Date().toLocaleDateString('bn-BD');
         document.getElementById('p-id').innerText = "#" + Math.floor(1000 + Math.random() * 9000);
@@ -741,28 +758,17 @@
         const name = document.getElementById('m-item-name').value;
         const qty = parseFloat(document.getElementById('m-item-qty').value);
         const rate = parseFloat(document.getElementById('m-item-rate').value);
-
-        if (!name || isNaN(qty) || isNaN(rate)) {
-            showToast("মেমোর পণ্যের তথ্য সঠিক নয়", 'error');
-            return;
-        }
-
-        memoProducts.push({
-            id: Date.now(),
-            name, qty, rate, total: qty * rate
-        });
-
+        if (!name || isNaN(qty) || isNaN(rate)) return;
+        memoProducts.push({ id: Date.now(), name, qty, rate, total: qty * rate });
         document.getElementById('m-item-name').value = '';
         document.getElementById('m-item-qty').value = '';
         document.getElementById('m-item-rate').value = '';
         updateMemoUI();
-        showToast("মেমোতে পণ্য যোগ হয়েছে");
     }
 
     function removeMemoItem(id) {
         memoProducts = memoProducts.filter(i => i.id !== id);
         updateMemoUI();
-        showToast("পণ্যটি মেমো থেকে বাদ দেওয়া হয়েছে");
     }
 
     function updateMemoUI() {
@@ -791,7 +797,6 @@
         document.getElementById('p-grand-total').innerText = grandTotal.toFixed(2);
     }
 
-    // --- Navigation ---
     function showTab(tab) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -799,19 +804,15 @@
         document.getElementById('tab-btn-' + tab).classList.add('active');
     }
 
-    // --- Export Function ---
     function exportAsImage(divId, fileName) {
         const element = document.getElementById(divId);
-        showToast("ছবি প্রসেসিং হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...");
-        
+        showToast("ছবি প্রসেসিং হচ্ছে...");
         html2canvas(element, { backgroundColor: "#FFFFFF", scale: 2 }).then(canvas => {
             const link = document.createElement('a');
             link.download = fileName + '-' + Date.now() + '.png';
             link.href = canvas.toDataURL("image/png");
             link.click();
-            showToast("ছবিটি সফলভাবে ডাউনলোড হয়েছে!");
-        }).catch(err => {
-            showToast("ছবি সেভ করতে সমস্যা হয়েছে: " + err.message, 'error');
+            showToast("ছবি সেভ হয়েছে!");
         });
     }
 </script>
