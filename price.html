@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>বাকালা প্রাইস ও বারকোড</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
+    <!-- QR/Barcode Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        /* CSS ডিজাইন */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Hind Siliguri', sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #1a73e8;
+        }
+
+        .input-with-btn {
+            display: flex;
+            gap: 8px;
+        }
+
+        .scan-btn-small {
+            padding: 0 15px;
+            background: #34a853;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .unit-selector-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* মডাল স্টাইল */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        #reader {
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .unit-option {
+            padding: 12px;
+            border: 1px solid #eee;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .unit-option:hover {
+            background: #e8f0fe;
+        }
+
+        /* সার্চ ও লিস্ট */
+        .search-area {
+            margin: 20px 0;
+            display: flex;
+            gap: 8px;
+        }
+
+        .product-item {
+            background: #fff;
+            border: 1px solid #eee;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .barcode-text {
+            font-size: 11px;
+            color: #999;
+            display: block;
+        }
+
+        .price-tag {
+            background: #e8f0fe;
+            color: #1a73e8;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+
+        .delete-btn {
+            color: #d93025;
+            cursor: pointer;
+            background: none;
+            border: none;
+            margin-left: 8px;
+            font-size: 18px;
+        }
+
+        #loader { display: none; text-align: center; color: #1a73e8; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>বাকালা প্রাইস লিস্ট</h2>
+
+    <!-- বারকোড ইনপুট -->
+    <div class="form-group">
+        <label>বারকোড (স্ক্যান করুন)</label>
+        <div class="input-with-btn">
+            <input type="text" id="pBarcode" placeholder="কোড নম্বর...">
+            <button class="scan-btn-small" onclick="openScanner('input')">📷</button>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>পণ্যের নাম</label>
+        <input type="text" id="pName" placeholder="যেমন: লাক্স সাবান...">
+    </div>
+
+    <div class="form-group">
+        <label>পরিমাণ/ইউনিট</label>
+        <div class="unit-selector-btn" id="openUnitModalBtn">
+            <span id="selectedUnitText">সিলেক্ট করুন</span>
+            <span>▼</span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>পণ্যের দাম (টাকা)</label>
+        <input type="number" id="pPrice" placeholder="0.00">
+    </div>
+
+    <button class="save-btn" id="addBtn">সেভ করুন</button>
+
+    <div id="loader">কাজ চলছে...</div>
+
+    <!-- সার্চ বার ও স্ক্যানার সার্চ -->
+    <div class="search-area">
+        <input type="text" id="searchBar" placeholder="নাম দিয়ে খুঁজুন..." style="flex: 1;">
+        <button class="scan-btn-small" onclick="openScanner('search')" title="স্ক্যান করে খুঁজুন">🔍📷</button>
+    </div>
+
+    <div class="product-list" id="productList"></div>
+</div>
+
+<!-- ইউনিট সিলেক্টর মডাল -->
+<div class="modal-overlay" id="unitModal">
+    <div class="modal-content">
+        <h3 style="margin-bottom:15px; text-align:center;">ইউনিট সিলেক্ট করুন</h3>
+        <div class="unit-option" data-unit="১ প্যাকেট">১ প্যাকেট</div>
+        <div class="unit-option" data-unit="১ বস্তা">১ বস্তা</div>
+        <div class="unit-option" data-unit="১ কেজি">১ কেজি</div>
+        <div class="unit-option" data-unit="১ টি">১ টি</div>
+        <button onclick="closeModal('unitModal')" class="save-btn" style="background:#888;">বন্ধ করুন</button>
+    </div>
+</div>
+
+<!-- স্ক্যানার মডাল -->
+<div class="modal-overlay" id="scannerModal">
+    <div class="modal-content" style="max-width: 450px;">
+        <h3 style="margin-bottom:10px; text-align:center;">কোড স্ক্যান করুন</h3>
+        <div id="reader"></div>
+        <button onclick="closeScanner()" class="save-btn" style="background:#d93025;">বন্ধ করুন</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDgFaTrHW7Grp_Q22p6KNcHZxaEujHsLsE",
+        authDomain: "exchange-project-d4028.firebaseapp.com",
+        databaseURL: "https://exchange-project-d4028-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "exchange-project-d4028",
+        storageBucket: "exchange-project-d4028.firebasestorage.app",
+        messagingSenderId: "313976742479",
+        appId: "1:313976742479:web:45951b360d875c4768c03a",
+        measurementId: "G-PQMFYZS958"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const productsRef = ref(db, 'bakala_products');
+
+    const pBarcode = document.getElementById('pBarcode');
+    const pName = document.getElementById('pName');
+    const pPrice = document.getElementById('pPrice');
+    const selectedUnitText = document.getElementById('selectedUnitText');
+    const productListDiv = document.getElementById('productList');
+    const loader = document.getElementById('loader');
+    
+    let currentUnit = "";
+    let allProducts = [];
+    let html5QrCode;
+    let scanTarget = "input"; // 'input' or 'search'
+
+    // মডাল হ্যান্ডলিং
+    document.getElementById('openUnitModalBtn').onclick = () => document.getElementById('unitModal').style.display = 'flex';
+    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+    document.querySelectorAll('.unit-option').forEach(opt => {
+        opt.onclick = () => {
+            currentUnit = opt.dataset.unit;
+            selectedUnitText.innerText = currentUnit;
+            closeModal('unitModal');
+        };
+    });
+
+    // স্ক্যানার ফাংশনালিটি
+    window.openScanner = (target) => {
+        scanTarget = target;
+        document.getElementById('scannerModal').style.display = 'flex';
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+
+        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
+    };
+
+    window.closeScanner = () => {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('scannerModal').style.display = 'none';
+            });
+        } else {
+            document.getElementById('scannerModal').style.display = 'none';
+        }
+    };
+
+    function onScanSuccess(decodedText) {
+        if (scanTarget === "input") {
+            pBarcode.value = decodedText;
+            // কোড পেলে অটোমেটিক ডাটাবেজে চেক করা যায়
+            checkExistingProduct(decodedText);
+        } else {
+            // সার্চ মোডে স্ক্যান করলে সরাসরি ফিল্টার হবে
+            document.getElementById('searchBar').value = decodedText;
+            filterProducts(decodedText);
+        }
+        closeScanner();
+    }
+
+    function checkExistingProduct(code) {
+        const found = allProducts.find(p => p.barcode === code);
+        if (found) {
+            pName.value = found.name;
+            pPrice.value = found.price;
+            currentUnit = found.unit;
+            selectedUnitText.innerText = found.unit;
+        }
+    }
+
+    // সেভ ডাটা
+    document.getElementById('addBtn').onclick = () => {
+        const name = pName.value.trim();
+        const price = pPrice.value.trim();
+        const barcode = pBarcode.value.trim();
+
+        if (!name || !price || !currentUnit) {
+            alert("নাম, দাম এবং ইউনিট অবশ্যই পূরণ করুন।");
+            return;
+        }
+
+        loader.style.display = "block";
+        push(productsRef, {
+            name, price, barcode, unit: currentUnit, timestamp: Date.now()
+        }).then(() => {
+            pName.value = ""; pPrice.value = ""; pBarcode.value = "";
+            selectedUnitText.innerText = "সিলেক্ট করুন";
+            currentUnit = "";
+            loader.style.display = "none";
+        });
+    };
+
+    // ডাটা রিড
+    onValue(productsRef, (snap) => {
+        const data = snap.val();
+        allProducts = [];
+        if (data) {
+            Object.keys(data).forEach(k => allProducts.push({ id: k, ...data[k] }));
+            renderProducts(allProducts);
+        } else {
+            productListDiv.innerHTML = '<p style="text-align:center;color:#888;">কোন তথ্য নেই।</p>';
+        }
+    });
+
+    function renderProducts(products) {
+        productListDiv.innerHTML = "";
+        products.sort((a,b) => b.timestamp - a.timestamp);
+        products.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+                <div>
+                    <strong>${p.name}</strong> <small style="color:#666">(${p.unit})</small>
+                    ${p.barcode ? `<span class="barcode-text">BC: ${p.barcode}</span>` : ''}
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <span class="price-tag">${p.price} ৳</span>
+                    <button class="delete-btn" onclick="deleteProduct('${p.id}')">✕</button>
+                </div>
+            `;
+            productListDiv.appendChild(div);
+        });
+    }
+
+    window.deleteProduct = (id) => {
+        if(confirm("মুছতে চান?")) remove(ref(db, `bakala_products/${id}`));
+    };
+
+    function filterProducts(term) {
+        const t = term.toLowerCase();
+        const filtered = allProducts.filter(p => 
+            p.name.toLowerCase().includes(t) || (p.barcode && p.barcode.includes(t))
+        );
+        renderProducts(filtered);
+    }
+
+    document.getElementById('searchBar').oninput = (e) => filterProducts(e.target.value);
+
+</script>
+</body>
+</html>
+
