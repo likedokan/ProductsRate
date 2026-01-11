@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>দাম মনে রাখুন</title>
+    <title>দাম ও কেনা দাম মনে রাখুন</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;600&display=swap" rel="stylesheet">
     <!-- QR/Barcode Scanner Library -->
@@ -92,9 +92,16 @@
         }
 
         .price-card h1 {
-            font-size: 45px;
+            font-size: 40px;
             color: var(--success-color);
-            margin: 10px 0;
+            margin: 5px 0;
+        }
+
+        .price-card .buy-price-text {
+            font-size: 22px;
+            color: var(--danger-color);
+            margin-bottom: 10px;
+            font-weight: 600;
         }
 
         .price-card p {
@@ -122,9 +129,18 @@
         }
 
         .form-group { margin-bottom: 10px; }
-        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 3px; }
+        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #555; }
         input {
             width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;
+        }
+        input:focus { border-color: var(--primary-color); outline: none; }
+
+        .calculator-box {
+            background: #e7f0fe;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px dashed var(--primary-color);
         }
 
         .save-btn {
@@ -133,17 +149,20 @@
 
         /* List Area */
         .search-area {
-            display: flex; gap: 8px; margin-bottom: 15px; position: sticky; top: 0; background: white; padding: 10px 0;
+            display: flex; gap: 8px; margin-bottom: 15px; position: sticky; top: 0; background: white; padding: 10px 0; z-index: 100;
         }
 
         .product-item {
             background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 10px;
             display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer;
         }
 
         .product-info h4 { font-size: 16px; margin-bottom: 4px; }
-        .product-info span { font-size: 12px; color: #888; }
-        .price-tag { font-size: 18px; font-weight: bold; color: var(--primary-color); }
+        .product-info span { font-size: 11px; color: #888; }
+        .price-tags-list { text-align: right; }
+        .list-sell-price { font-size: 16px; font-weight: bold; color: var(--success-color); }
+        .list-buy-price { font-size: 12px; color: #888; }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6);
@@ -161,21 +180,49 @@
 
 <div class="container">
     <div class="header">
-        <h2>দাম মনে রাখুন (Price Checker)</h2>
+        <h2>দাম ও কেনা দাম (Checker)</h2>
     </div>
 
     <!-- Quick Entry Form -->
     <div class="form-card">
-        <p style="font-size:12px; color:#1a73e8; margin-bottom:10px; font-weight:bold;">নতুন পণ্য যোগ করুন</p>
+        <p style="font-size:13px; color:#1a73e8; margin-bottom:12px; font-weight:bold; border-bottom: 1px solid #ddd; padding-bottom: 5px;">নতুন পণ্য যোগ করুন</p>
+        
         <div class="form-group">
-            <input type="text" id="pBarcode" placeholder="বারকোড (স্ক্যান বা টাইপ)">
+            <label>বারকোড (স্ক্যান বা টাইপ)</label>
+            <input type="text" id="pBarcode" placeholder="কোড লিখুন...">
         </div>
+        
         <div class="form-group">
-            <input type="text" id="pName" placeholder="পণ্যের নাম">
+            <label>পণ্যের নাম</label>
+            <input type="text" id="pName" placeholder="নাম লিখুন...">
         </div>
-        <div class="form-group">
-            <input type="number" id="pSellPrice" placeholder="বিক্রয় মূল্য (৳)">
+
+        <!-- Buying Calculator Section -->
+        <div class="calculator-box">
+            <p style="font-size: 11px; font-weight: bold; color: #1a73e8; margin-bottom: 8px;">ক্রয় ক্যালকুলেটর (অটো দাম বের করুন)</p>
+            <div style="display: flex; gap: 8px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>মোট ক্রয় মূল্য (৳)</label>
+                    <input type="number" id="totalBuyCost" placeholder="যেমন: ১০০০">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>মোট পরিমাণ (পিস)</label>
+                    <input type="number" id="totalBuyQty" placeholder="যেমন: ৫০">
+                </div>
+            </div>
         </div>
+
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label>১টির কেনা দাম (৳)</label>
+                <input type="number" id="pBuyPrice" placeholder="0.00" style="background: #fff; font-weight: bold; color: var(--danger-color);">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>১টির বিক্রয় মূল্য (৳)</label>
+                <input type="number" id="pSellPrice" placeholder="0.00" style="font-weight: bold; color: var(--success-color);">
+            </div>
+        </div>
+        
         <button class="save-btn" id="addBtn">সেভ করুন</button>
     </div>
 
@@ -189,9 +236,12 @@
 <!-- Price Result Modal -->
 <div class="price-popup" id="priceResultModal">
     <div class="price-card">
-        <p id="resName">পণ্যের নাম</p>
+        <p id="resName" style="font-weight:600; color:#333; font-size: 20px;">পণ্যের নাম</p>
+        <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
+        <span style="font-size: 13px; color: #888;">বিক্রয় মূল্য (১ পিস)</span>
         <h1 id="resPrice">৳ ০.০০</h1>
-        <p id="resBarcode" style="font-size:12px; margin-top:10px;"></p>
+        <div class="buy-price-text" id="resBuyPrice">কেনা দাম: ৳ ০.০০</div>
+        <p id="resBarcode" style="font-size:11px; color:#999; margin-top: 10px;"></p>
         <button class="close-popup-btn" onclick="closePricePopup()">ঠিক আছে</button>
     </div>
 </div>
@@ -225,17 +275,36 @@
 
     const pBarcode = document.getElementById('pBarcode');
     const pName = document.getElementById('pName');
+    const pBuyPrice = document.getElementById('pBuyPrice');
     const pSellPrice = document.getElementById('pSellPrice');
+    const totalBuyCost = document.getElementById('totalBuyCost');
+    const totalBuyQty = document.getElementById('totalBuyQty');
     const productListDiv = document.getElementById('productList');
     const addBtn = document.getElementById('addBtn');
     
     let allProducts = [];
     let html5QrCode;
 
+    // অটো কেনা দাম ক্যালকুলেশন
+    function calculateUnitPrice() {
+        const cost = parseFloat(totalBuyCost.value) || 0;
+        const qty = parseFloat(totalBuyQty.value) || 0;
+        if (cost > 0 && qty > 0) {
+            const unitPrice = cost / qty;
+            pBuyPrice.value = unitPrice.toFixed(2);
+        } else {
+            pBuyPrice.value = "";
+        }
+    }
+
+    totalBuyCost.oninput = calculateUnitPrice;
+    totalBuyQty.oninput = calculateUnitPrice;
+
     // পপআপে দাম দেখানো
     window.showPriceResult = (product) => {
         document.getElementById('resName').innerText = product.name;
         document.getElementById('resPrice').innerText = `৳ ${product.sellPrice}`;
+        document.getElementById('resBuyPrice').innerText = `কেনা দাম: ৳ ${product.buyPrice || 0}`;
         document.getElementById('resBarcode').innerText = `বারকোড: ${product.barcode || 'নেই'}`;
         document.getElementById('priceResultModal').style.display = 'flex';
     };
@@ -244,7 +313,7 @@
         document.getElementById('priceResultModal').style.display = 'none';
     };
 
-    // স্ক্যানার হ্যান্ডলার
+    // স্ক্যানার
     window.openPriceScanner = () => {
         document.getElementById('scannerModal').style.display = 'flex';
         html5QrCode = new Html5Qrcode("reader");
@@ -254,7 +323,7 @@
             if (match) {
                 showPriceResult(match);
             } else {
-                alert("পণ্যটি পাওয়া যায়নি! আপনি চাইলে নিচে বারকোড দিয়ে নতুন এন্ট্রি করতে পারেন।");
+                alert("পণ্যটি পাওয়া যায়নি!");
                 pBarcode.value = text;
             }
         }).catch(err => {
@@ -278,19 +347,21 @@
     // পণ্য সেভ করা
     addBtn.onclick = async () => {
         const name = pName.value.trim();
+        const buy = parseFloat(pBuyPrice.value) || 0;
         const sell = parseFloat(pSellPrice.value) || 0;
         const barcode = pBarcode.value.trim();
         
         if (!name || sell <= 0) {
-            alert("পণ্যের নাম এবং দাম সঠিক দিন।");
+            alert("পণ্যের নাম এবং বিক্রয় মূল্য সঠিক দিন।");
             return;
         }
 
         try {
             await push(productsRef, { 
-                name, sellPrice: sell, barcode, timestamp: Date.now() 
+                name, buyPrice: buy, sellPrice: sell, barcode, timestamp: Date.now() 
             });
-            pName.value = ""; pSellPrice.value = ""; pBarcode.value = "";
+            pName.value = ""; pBuyPrice.value = ""; pSellPrice.value = ""; pBarcode.value = "";
+            totalBuyCost.value = ""; totalBuyQty.value = "";
             alert("সফলভাবে সেভ হয়েছে।");
         } catch (e) { alert("ত্রুটি হয়েছে!"); }
     };
@@ -316,19 +387,22 @@
         products.forEach(p => {
             const div = document.createElement('div');
             div.className = 'product-item';
-            div.onclick = () => showPriceResult(p); // লিস্টে ক্লিক করলেও দাম দেখাবে
+            div.onclick = () => showPriceResult(p);
             div.innerHTML = `
                 <div class="product-info">
                     <h4>${p.name}</h4>
-                    <span>${p.barcode || 'বারকোড নেই'}</span>
+                    <span>BC: ${p.barcode || '---'}</span>
                 </div>
-                <div class="price-tag">৳ ${p.sellPrice}</div>
+                <div class="price-tags-list">
+                    <div class="list-sell-price">৳ ${p.sellPrice}</div>
+                    <div class="list-buy-price">কেনা: ৳ ${p.buyPrice || 0}</div>
+                </div>
             `;
             productListDiv.appendChild(div);
         });
     }
 
-    // সার্চ ফিল্টার
+    // সার্চ
     document.getElementById('searchBar').oninput = (e) => {
         const t = e.target.value.toLowerCase();
         const filtered = allProducts.filter(p => 
