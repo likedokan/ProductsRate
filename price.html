@@ -70,7 +70,7 @@
         .header {
             text-align: center;
             margin-bottom: 15px;
-            padding-right: 50px; /* Space for the button */
+            padding-right: 50px;
         }
 
         h2 {
@@ -79,7 +79,6 @@
             font-size: 22px;
         }
 
-        /* Summary Dashboard */
         .summary-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -180,7 +179,6 @@
             margin-top: 10px;
         }
 
-        /* List Design */
         .search-area {
             margin: 15px 0;
             display: flex;
@@ -199,6 +197,15 @@
             border-radius: 12px;
             margin-bottom: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.5s ease;
+        }
+
+        /* Highlight Animation */
+        .highlight-item {
+            background: #fff9c4 !important;
+            border: 2px solid #fbc02d !important;
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(251, 192, 45, 0.4);
         }
 
         .item-main {
@@ -312,21 +319,10 @@
         }
 
         #reader { width: 100%; border-radius: 10px; overflow: hidden; }
-
-        .calc-badge {
-            background: #e7f3ff;
-            color: #007bff;
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-top: 4px;
-            display: inline-block;
-        }
     </style>
 </head>
 <body>
 
-<!-- Floating Corner Scanner Button -->
 <button class="main-scan-btn" onclick="handleSmartScan()" title="স্ক্যান করুন">📷</button>
 
 <div class="container">
@@ -334,7 +330,6 @@
         <h2>বাকালা ইনভেন্টরি প্রো</h2>
     </div>
 
-    <!-- Dashboard Summary -->
     <div class="summary-grid">
         <div class="summary-card">
             <span>মোট ইনভেস্ট (ক্রয়)</span>
@@ -346,7 +341,6 @@
         </div>
     </div>
 
-    <!-- entry form -->
     <div class="form-card" id="entryForm">
         <div class="form-group">
             <label>বারকোড (স্ক্যান করুন)</label>
@@ -409,7 +403,6 @@
     </div>
 
     <div id="totalCount" style="font-size:12px; color:#666; margin-bottom:10px;">মোট আইটেম: ০ টি</div>
-    <div id="loader" style="display:none; text-align:center;">লোডিং...</div>
     <div id="productList"></div>
 </div>
 
@@ -478,11 +471,9 @@
         setTimeout(() => t.style.display = 'none', 3000);
     }
 
-    // অটো ক্যালকুলেশন লজিক
     function calculateUnitPrice() {
         const totalCost = parseFloat(pTotalBuyCost.value) || 0;
         const qty = parseInt(pBuyQtyInput.value) || 0;
-        
         if (totalCost > 0 && qty > 0) {
             const unitPrice = totalCost / qty;
             pBuyPrice.value = unitPrice.toFixed(2);
@@ -506,20 +497,35 @@
         };
     });
 
-    // Smart Scan Handler
+    // হাইলাইট করার ফাংশন
+    window.highlightProduct = (id) => {
+        const element = document.getElementById(`prod-${id}`);
+        if (element) {
+            // পূর্বের কোন হাইলাইট থাকলে সরিয়ে ফেলা
+            document.querySelectorAll('.product-item').forEach(el => el.classList.remove('highlight-item'));
+            
+            // নতুন হাইলাইট যোগ করা
+            element.classList.add('highlight-item');
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // ৩ সেকেন্ড পর হাইলাইট সরিয়ে ফেলা
+            setTimeout(() => {
+                element.classList.remove('highlight-item');
+            }, 3000);
+        }
+    };
+
+    // স্মার্ট স্ক্যান লজিক আপডেট
     window.handleSmartScan = () => {
         const scannerModal = document.getElementById('scannerModal');
         scannerModal.style.display = 'flex';
         html5QrCode = new Html5Qrcode("reader");
         html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (text) => {
             closeScanner();
-            
-            // Check if product exists
             const match = allProducts.find(p => p.barcode === text);
-            
             if (match) {
-                showToast("পণ্যটি পাওয়া গেছে! এডিট করুন।");
-                editProduct(match.id);
+                showToast("পণ্যটি পাওয়া গেছে!");
+                highlightProduct(match.id); // এডিটের বদলে হাইলাইট
             } else {
                 showToast("নতুন পণ্য! তথ্য পূরণ করে এন্ট্রি করুন।");
                 resetForm();
@@ -528,7 +534,7 @@
                 pName.focus();
             }
         }).catch(err => {
-            showToast("ক্যামেরা ওপেন করা যাচ্ছে না। পারমিশন দিন।");
+            showToast("ক্যামেরা ওপেন করা যাচ্ছে না।");
         });
     };
 
@@ -541,8 +547,8 @@
                 pBarcode.value = text;
                 const match = allProducts.find(p => p.barcode === text);
                 if (match) { 
-                    showToast("এই পণ্যটি আগে থেকে আছে!"); 
-                    editProduct(match.id); 
+                    showToast("পণ্যটি লিস্টে হাইলাইট করা হয়েছে।"); 
+                    highlightProduct(match.id); // ইনপুট স্ক্যানেও হাইলাইট
                 }
             } else {
                 document.getElementById('searchBar').value = text;
@@ -570,19 +576,16 @@
         const qty = parseInt(pQty.value) || 0;
         const buy = parseFloat(pBuyPrice.value) || 0;
         const sell = parseFloat(pSellPrice.value) || 0;
-        
         if (!name || sell <= 0 || !currentUnit) {
-            showToast("নাম, মূল্য এবং ইউনিট ঠিকভাবে দিন।");
+            showToast("সব তথ্য ঠিকভাবে দিন।");
             return;
         }
-
         const payload = { 
             name, qty, buyPrice: buy, sellPrice: sell, 
             barcode: pBarcode.value.trim(), 
             unit: currentUnit, 
             timestamp: Date.now() 
         };
-
         try {
             if (editingId) {
                 await update(ref(db, `bakala_products/${editingId}`), payload);
@@ -634,7 +637,6 @@
         const data = snap.val();
         allProducts = [];
         let totalInv = 0; let totalProf = 0;
-
         if (data) {
             Object.keys(data).forEach(k => {
                 const item = { id: k, ...data[k] };
@@ -654,12 +656,12 @@
     function renderProducts(products) {
         productListDiv.innerHTML = "";
         products.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
-        
         products.forEach(p => {
             const unitProfit = p.sellPrice - (p.buyPrice || 0);
             const isLow = (p.qty || 0) <= 5;
             const div = document.createElement('div');
             div.className = 'product-item';
+            div.id = `prod-${p.id}`; // আইডি যোগ করা হয়েছে হাইলাইটের জন্য
             div.innerHTML = `
                 <div class="item-main">
                     <div>
