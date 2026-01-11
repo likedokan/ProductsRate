@@ -146,6 +146,10 @@
         .save-btn {
             width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
         }
+        
+        #cancelBtn {
+            width: 100%; padding: 8px; background: #999; color: white; border: none; border-radius: 8px; font-size: 12px; margin-top: 5px; cursor: pointer; display: none;
+        }
 
         /* List Area */
         .search-area {
@@ -153,16 +157,21 @@
         }
 
         .product-item {
-            background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 10px;
+            background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 12px; margin-bottom: 10px;
             display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer;
         }
 
+        .product-info { flex: 1; cursor: pointer; }
         .product-info h4 { font-size: 16px; margin-bottom: 4px; }
         .product-info span { font-size: 11px; color: #888; }
-        .price-tags-list { text-align: right; }
+        
+        .price-tags-list { text-align: right; margin-right: 15px; cursor: pointer; }
         .list-sell-price { font-size: 16px; font-weight: bold; color: var(--success-color); }
         .list-buy-price { font-size: 12px; color: #888; }
+
+        .item-actions { display: flex; flex-direction: column; gap: 5px; }
+        .edit-icon-btn { color: var(--primary-color); border: none; background: #e7f0fe; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
+        .delete-icon-btn { color: var(--danger-color); border: none; background: #fee2e2; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6);
@@ -184,8 +193,8 @@
     </div>
 
     <!-- Quick Entry Form -->
-    <div class="form-card">
-        <p style="font-size:13px; color:#1a73e8; margin-bottom:12px; font-weight:bold; border-bottom: 1px solid #ddd; padding-bottom: 5px;">নতুন পণ্য যোগ করুন</p>
+    <div class="form-card" id="formArea">
+        <p id="formTitle" style="font-size:13px; color:#1a73e8; margin-bottom:12px; font-weight:bold; border-bottom: 1px solid #ddd; padding-bottom: 5px;">নতুন পণ্য যোগ করুন</p>
         
         <div class="form-group">
             <label>বারকোড (স্ক্যান বা টাইপ)</label>
@@ -224,6 +233,7 @@
         </div>
         
         <button class="save-btn" id="addBtn">সেভ করুন</button>
+        <button id="cancelBtn" onclick="resetForm()">বাতিল করুন</button>
     </div>
 
     <div class="search-area">
@@ -281,9 +291,12 @@
     const totalBuyQty = document.getElementById('totalBuyQty');
     const productListDiv = document.getElementById('productList');
     const addBtn = document.getElementById('addBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const formTitle = document.getElementById('formTitle');
     
     let allProducts = [];
     let html5QrCode;
+    let editingId = null;
 
     // অটো কেনা দাম ক্যালকুলেশন
     function calculateUnitPrice() {
@@ -311,6 +324,52 @@
 
     window.closePricePopup = () => {
         document.getElementById('priceResultModal').style.display = 'none';
+    };
+
+    // এডিট ফাংশন
+    window.editProduct = (id) => {
+        const product = allProducts.find(p => p.id === id);
+        if (product) {
+            editingId = id;
+            pBarcode.value = product.barcode || "";
+            pName.value = product.name;
+            pBuyPrice.value = product.buyPrice || 0;
+            pSellPrice.value = product.sellPrice;
+            
+            // ক্যালকুলেটর ক্লিয়ার
+            totalBuyCost.value = "";
+            totalBuyQty.value = "";
+            
+            formTitle.innerText = "পণ্য আপডেট করুন";
+            addBtn.innerText = "আপডেট করুন";
+            cancelBtn.style.display = "block";
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    // ডিলিট ফাংশন
+    window.deleteProduct = (id) => {
+        if (confirm("আপনি কি নিশ্চিতভাবে এই পণ্যটি মুছে ফেলতে চান?")) {
+            const itemRef = ref(db, `bakala_products/${id}`);
+            remove(itemRef).then(() => {
+                alert("পণ্যটি মুছে ফেলা হয়েছে।");
+            }).catch(err => alert("ত্রুটি: " + err.message));
+        }
+    };
+
+    // রিসেট ফর্ম
+    window.resetForm = () => {
+        editingId = null;
+        pBarcode.value = "";
+        pName.value = "";
+        pBuyPrice.value = "";
+        pSellPrice.value = "";
+        totalBuyCost.value = "";
+        totalBuyQty.value = "";
+        formTitle.innerText = "নতুন পণ্য যোগ করুন";
+        addBtn.innerText = "সেভ করুন";
+        cancelBtn.style.display = "none";
     };
 
     // স্ক্যানার
@@ -344,7 +403,7 @@
         }
     };
 
-    // পণ্য সেভ করা
+    // পণ্য সেভ বা আপডেট করা
     addBtn.onclick = async () => {
         const name = pName.value.trim();
         const buy = parseFloat(pBuyPrice.value) || 0;
@@ -356,13 +415,26 @@
             return;
         }
 
+        const productData = { 
+            name, 
+            buyPrice: buy, 
+            sellPrice: sell, 
+            barcode, 
+            timestamp: Date.now() 
+        };
+
         try {
-            await push(productsRef, { 
-                name, buyPrice: buy, sellPrice: sell, barcode, timestamp: Date.now() 
-            });
-            pName.value = ""; pBuyPrice.value = ""; pSellPrice.value = ""; pBarcode.value = "";
-            totalBuyCost.value = ""; totalBuyQty.value = "";
-            alert("সফলভাবে সেভ হয়েছে।");
+            if (editingId) {
+                // আপডেট লজিক
+                const itemRef = ref(db, `bakala_products/${editingId}`);
+                await update(itemRef, productData);
+                alert("পণ্য সফলভাবে আপডেট হয়েছে।");
+            } else {
+                // নতুন যোগ লজিক
+                await push(productsRef, productData);
+                alert("সফলভাবে সেভ হয়েছে।");
+            }
+            resetForm();
         } catch (e) { alert("ত্রুটি হয়েছে!"); }
     };
 
@@ -387,15 +459,18 @@
         products.forEach(p => {
             const div = document.createElement('div');
             div.className = 'product-item';
-            div.onclick = () => showPriceResult(p);
             div.innerHTML = `
-                <div class="product-info">
+                <div class="product-info" onclick='showPriceResult(${JSON.stringify(p).replace(/'/g, "&apos;")})'>
                     <h4>${p.name}</h4>
                     <span>BC: ${p.barcode || '---'}</span>
                 </div>
-                <div class="price-tags-list">
+                <div class="price-tags-list" onclick='showPriceResult(${JSON.stringify(p).replace(/'/g, "&apos;")})'>
                     <div class="list-sell-price">৳ ${p.sellPrice}</div>
                     <div class="list-buy-price">কেনা: ৳ ${p.buyPrice || 0}</div>
+                </div>
+                <div class="item-actions">
+                    <button class="edit-icon-btn" onclick="editProduct('${p.id}')">✎</button>
+                    <button class="delete-icon-btn" onclick="deleteProduct('${p.id}')">✕</button>
                 </div>
             `;
             productListDiv.appendChild(div);
