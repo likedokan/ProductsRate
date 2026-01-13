@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>দাম ও কেনা দাম মনে রাখুন - প্রিমিয়াম ইউআই</title>
-    <!-- Google Fonts: Hind Siliguri for Bengali and Inter for Numbers -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <!-- QR/Barcode Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -14,6 +14,7 @@
             --primary-light: #818cf8;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
             --bg: #f3f4f6;
             --card-bg: #ffffff;
             --text-main: #1f2937;
@@ -36,7 +37,7 @@
             color: var(--text-main);
             line-height: 1.5;
             padding: 16px;
-            padding-bottom: 100px; /* Space for FAB */
+            padding-bottom: 100px;
         }
 
         .container {
@@ -44,7 +45,6 @@
             margin: 0 auto;
         }
 
-        /* Header Area */
         .header {
             padding: 20px 0;
             text-align: center;
@@ -53,11 +53,9 @@
         .header h2 {
             font-weight: 700;
             color: var(--primary);
-            letter-spacing: -0.5px;
             font-size: 24px;
         }
 
-        /* Floating Scan Button */
         .main-scan-btn {
             position: fixed;
             bottom: 25px;
@@ -78,11 +76,8 @@
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .main-scan-btn:active {
-            transform: scale(0.9);
-        }
+        .main-scan-btn:active { transform: scale(0.9); }
 
-        /* Form Card */
         .glass-card {
             background: var(--card-bg);
             padding: 24px;
@@ -163,9 +158,9 @@
             transition: all 0.2s;
         }
 
+        .save-btn.edit-mode { background: var(--warning); }
         .save-btn:active { transform: translateY(2px); box-shadow: none; }
 
-        /* Search Area */
         .search-area {
             position: sticky;
             top: 10px;
@@ -179,7 +174,6 @@
             border: 1px solid #ddd;
         }
 
-        /* Product List */
         .product-item {
             background: white;
             padding: 16px;
@@ -201,7 +195,7 @@
         .list-sell-price { font-size: 18px; font-weight: 800; color: var(--success); }
         .list-buy-price { font-size: 12px; color: var(--danger); font-weight: 600; opacity: 0.8; }
 
-        /* Result Popup (Premium Design) */
+        /* Popups */
         .price-popup {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -219,7 +213,7 @@
             background: white;
             width: 100%;
             max-width: 340px;
-            padding: 40px 30px;
+            padding: 30px 24px;
             border-radius: 32px;
             text-align: center;
             position: relative;
@@ -227,44 +221,37 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        .price-card::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 8px;
-            background: linear-gradient(to right, var(--success), var(--primary));
-        }
-
         .price-card h1 {
-            font-size: 48px;
+            font-size: 42px;
             font-weight: 800;
             color: var(--success);
             margin: 10px 0;
             font-family: 'Inter';
         }
 
-        .price-card .label-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            background: #ecfdf5;
-            color: var(--success);
-            border-radius: 100px;
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 8px;
+        .action-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
         }
 
-        .buy-tag {
-            background: #fef2f2;
-            color: var(--danger);
-            padding: 8px 16px;
+        .action-btn {
+            padding: 12px;
             border-radius: 12px;
-            font-size: 15px;
-            font-weight: 600;
-            display: inline-block;
-            margin-top: 15px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 14px;
         }
 
-        /* Scanner Styles */
+        .edit-btn { background: #fef3c7; color: #d97706; }
+        .delete-btn { background: #fee2e2; color: #dc2626; }
+
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9);
             display: none; justify-content: center; align-items: center; z-index: 5000;
@@ -280,23 +267,10 @@
         }
 
         #reader { width: 100%; border-radius: 16px; overflow: hidden; border: 2px solid var(--primary); }
-
-        .close-btn-alt {
-            margin-top: 20px;
-            padding: 14px;
-            width: 100%;
-            background: #f3f4f6;
-            border: none;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            color: var(--text-main);
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
 
-<!-- Floating Action Button -->
 <button class="main-scan-btn" onclick="openPriceScanner()">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="8" y1="12" x2="16" y2="12"></line><line x1="12" y1="8" x2="12" y2="16"></line></svg>
 </button>
@@ -306,9 +280,9 @@
         <h2>Smart Checker</h2>
     </div>
 
-    <!-- Main Form -->
-    <div class="glass-card">
-        <div class="section-title">পণ্য যোগ করুন</div>
+    <!-- Input Form -->
+    <div class="glass-card" id="inputForm">
+        <div class="section-title" id="formTitle">নতুন পণ্য যোগ করুন</div>
         
         <div class="form-group">
             <label>বারকোড নম্বর</label>
@@ -343,46 +317,55 @@
         </div>
         
         <button class="save-btn" id="addBtn">সেভ নিশ্চিত করুন</button>
+        <button id="cancelBtn" style="display:none; width:100%; margin-top:10px; background:none; border:none; color:var(--text-muted); font-weight:600; cursor:pointer;">বাতিল করুন</button>
     </div>
 
-    <!-- Search Section -->
+    <!-- Search -->
     <div class="search-area">
         <input type="text" id="searchBar" class="search-input" placeholder="🔍 নাম বা কোড দিয়ে খুঁজুন...">
     </div>
 
-    <!-- Product List Container -->
     <div id="productList"></div>
 </div>
 
-<!-- Price Card Modal -->
+<!-- Product Details Popup -->
 <div class="price-popup" id="priceResultModal">
     <div class="price-card">
-        <div class="label-badge">বিক্রয় মূল্য</div>
+        <div style="display:inline-block; padding:4px 12px; background:#ecfdf5; color:var(--success); border-radius:100px; font-size:12px; font-weight:700; margin-bottom:8px;">বিক্রয় মূল্য</div>
         <p id="resName" style="font-weight:700; color:var(--text-main); font-size: 22px; margin-bottom: 5px;">পণ্য</p>
         <h1 id="resPrice">৳ ০.০০</h1>
         
-        <div class="buy-tag">কেনা: <span id="resBuyPrice">৳ ০.০০</span></div>
+        <div style="background:#fef2f2; color:var(--danger); padding:8px 16px; border-radius:12px; font-size:15px; font-weight:600; display:inline-block; margin-top:10px;">কেনা: <span id="resBuyPrice">৳ ০.০০</span></div>
         
-        <p id="resBarcode" style="font-size:12px; color:var(--text-muted); margin-top: 25px; font-family: 'Inter'; letter-spacing: 1px;"></p>
+        <p id="resBarcode" style="font-size:11px; color:var(--text-muted); margin-top: 20px; font-family:'Inter';"></p>
+
+        <div class="action-btns">
+            <button class="action-btn edit-btn" id="btnEditTrigger">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                এডিট
+            </button>
+            <button class="action-btn delete-btn" id="btnDeleteTrigger">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                ডিলিট
+            </button>
+        </div>
         
-        <button class="save-btn" style="margin-top: 30px;" onclick="closePricePopup()">বন্ধ করুন</button>
+        <button class="save-btn" style="margin-top: 20px;" onclick="closePricePopup()">বন্ধ করুন</button>
     </div>
 </div>
 
-<!-- Scanner View -->
 <div class="modal-overlay" id="scannerModal">
     <div class="modal-content">
         <h3 style="margin-bottom: 15px; color: var(--primary);">বারকোড স্ক্যানার</h3>
         <div id="reader"></div>
-        <button onclick="closeScanner()" class="close-btn-alt">ক্যামেরা বন্ধ করুন</button>
+        <button onclick="closeScanner()" style="margin-top:20px; padding:14px; width:100%; border:none; border-radius:16px; font-weight:600; color:#666;">ক্যামেরা বন্ধ করুন</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+    import { getDatabase, ref, push, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyDgFaTrHW7Grp_Q22p6KNcHZxaEujHsLsE",
         authDomain: "exchange-project-d4028.firebaseapp.com",
@@ -405,38 +388,116 @@
     const totalBuyQty = document.getElementById('totalBuyQty');
     const productListDiv = document.getElementById('productList');
     const addBtn = document.getElementById('addBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const formTitle = document.getElementById('formTitle');
     
     let allProducts = [];
     let html5QrCode;
+    let currentEditId = null; // এডিট মোড ট্র্যাক করার জন্য
 
-    // কেনা দামের হিসাব
     function calculateUnitPrice() {
         const cost = parseFloat(totalBuyCost.value) || 0;
         const qty = parseFloat(totalBuyQty.value) || 0;
         if (cost > 0 && qty > 0) {
             pBuyPrice.value = (cost / qty).toFixed(2);
-        } else {
-            pBuyPrice.value = "";
         }
     }
 
     totalBuyCost.oninput = calculateUnitPrice;
     totalBuyQty.oninput = calculateUnitPrice;
 
-    // দাম দেখানোর পপআপ
     window.showPriceResult = (product) => {
         document.getElementById('resName').innerText = product.name;
         document.getElementById('resPrice').innerText = `৳ ${product.sellPrice}`;
         document.getElementById('resBuyPrice').innerText = `৳ ${product.buyPrice || 0}`;
         document.getElementById('resBarcode').innerText = `SKU: ${product.barcode || 'N/A'}`;
         document.getElementById('priceResultModal').style.display = 'flex';
+
+        // এডিট বাটনে ডাটা পাস করা
+        document.getElementById('btnEditTrigger').onclick = () => {
+            prepareEdit(product);
+            closePricePopup();
+        };
+
+        // ডিলিট বাটনে ডাটা পাস করা
+        document.getElementById('btnDeleteTrigger').onclick = () => {
+            if(confirm('আপনি কি নিশ্চিত যে এই পণ্যটি মুছে ফেলতে চান?')) {
+                removeProduct(product.id);
+                closePricePopup();
+            }
+        };
     };
 
     window.closePricePopup = () => {
         document.getElementById('priceResultModal').style.display = 'none';
     };
 
-    // স্ক্যানার কন্ট্রোল
+    // এডিট মোড সেট করা
+    function prepareEdit(p) {
+        currentEditId = p.id;
+        pName.value = p.name;
+        pBarcode.value = p.barcode || "";
+        pBuyPrice.value = p.buyPrice || "";
+        pSellPrice.value = p.sellPrice || "";
+        totalBuyCost.value = "";
+        totalBuyQty.value = "";
+
+        addBtn.innerText = "আপডেট নিশ্চিত করুন";
+        addBtn.classList.add('edit-mode');
+        formTitle.innerText = "পণ্য এডিট করুন";
+        cancelBtn.style.display = "block";
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    cancelBtn.onclick = resetForm;
+
+    function resetForm() {
+        currentEditId = null;
+        pName.value = ""; pBarcode.value = ""; pBuyPrice.value = ""; pSellPrice.value = "";
+        totalBuyCost.value = ""; totalBuyQty.value = "";
+        addBtn.innerText = "সেভ নিশ্চিত করুন";
+        addBtn.classList.remove('edit-mode');
+        formTitle.innerText = "নতুন পণ্য যোগ করুন";
+        cancelBtn.style.display = "none";
+    }
+
+    // ডিলিট ফাংশন
+    async function removeProduct(id) {
+        try {
+            const itemRef = ref(db, `bakala_products/${id}`);
+            await remove(itemRef);
+        } catch (e) { console.error("Error deleting", e); }
+    }
+
+    // ডাটা সেভ বা আপডেট
+    addBtn.onclick = async () => {
+        const name = pName.value.trim();
+        const buy = parseFloat(pBuyPrice.value) || 0;
+        const sell = parseFloat(pSellPrice.value) || 0;
+        const barcode = pBarcode.value.trim();
+        
+        if (!name || sell <= 0) return;
+
+        const productData = { 
+            name, buyPrice: buy, sellPrice: sell, barcode, timestamp: Date.now() 
+        };
+
+        try {
+            if (currentEditId) {
+                // আপডেট মোড
+                const itemRef = ref(db, `bakala_products/${currentEditId}`);
+                await update(itemRef, productData);
+                resetForm();
+            } else {
+                // নতুন যোগ মোড
+                await push(productsRef, productData);
+                resetForm();
+            }
+        } catch (e) { console.error("Error saving/updating"); }
+    };
+
+    // স্ক্যানার
     window.openPriceScanner = () => {
         document.getElementById('scannerModal').style.display = 'flex';
         html5QrCode = new Html5Qrcode("reader");
@@ -447,7 +508,6 @@
                 showPriceResult(match);
             } else {
                 pBarcode.value = text;
-                // ভিব্রেট ইফেক্ট (যদি সাপোর্ট করে)
                 if (navigator.vibrate) navigator.vibrate(100);
             }
         }).catch(err => console.error(err));
@@ -464,25 +524,7 @@
         }
     };
 
-    // ডাটা সেভ
-    addBtn.onclick = async () => {
-        const name = pName.value.trim();
-        const buy = parseFloat(pBuyPrice.value) || 0;
-        const sell = parseFloat(pSellPrice.value) || 0;
-        const barcode = pBarcode.value.trim();
-        
-        if (!name || sell <= 0) return;
-
-        try {
-            await push(productsRef, { 
-                name, buyPrice: buy, sellPrice: sell, barcode, timestamp: Date.now() 
-            });
-            pName.value = ""; pBuyPrice.value = ""; pSellPrice.value = ""; pBarcode.value = "";
-            totalBuyCost.value = ""; totalBuyQty.value = "";
-        } catch (e) { console.error("Error saving"); }
-    };
-
-    // রিয়েলটাইম ডাটা লিস্ট
+    // রিয়েলটাইম লিস্ট রেন্ডার
     onValue(productsRef, (snap) => {
         const data = snap.val();
         allProducts = [];
@@ -496,7 +538,6 @@
 
     function renderProducts(products) {
         productListDiv.innerHTML = "";
-        // নতুনগুলো আগে দেখাবে
         products.sort((a,b) => b.timestamp - a.timestamp);
         
         products.forEach(p => {
@@ -517,7 +558,6 @@
         });
     }
 
-    // সার্চ ফাংশনালিটি
     document.getElementById('searchBar').oninput = (e) => {
         const term = e.target.value.toLowerCase();
         const filtered = allProducts.filter(p => 
