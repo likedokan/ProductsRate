@@ -3,205 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>দোকানের হিসাব - প্রো</title>
+    <title>দোকানের হিসাব - আল্টিমেট</title>
     <script src="https://cdn.tailwindcss.com"> </script>
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root { --bg-color: #f8fafc; --card-bg: #ffffff; --text-main: #1e293b; --border-color: #f1f5f9; }
-        .dark-theme { --bg-color: #0f172a; --card-bg: #1e293b; --text-main: #f1f5f9; --border-color: #334155; }
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: var(--bg-color); color: var(--text-main); padding: 16px; transition: all 0.3s ease; }
-        .main-container { margin-bottom: 120px; padding: 10px; border-radius: 20px; }
-        .summary-card { background-color: var(--card-bg); padding: 14px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02); margin-bottom: 8px; cursor: pointer; }
-        .filter-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.2s; flex: 1; }
-        .filter-box:active { transform: scale(0.95); background: #f1f5f9; }
-        /* "আজ" বক্সের জন্য একটু আলাদা স্টাইল */
-        #boxToday { border-color: #3b82f6; color: #3b82f6; }
-        .transaction-list::-webkit-scrollbar { width: 4px; }
-        .transaction-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        .picker-item { padding: 10px; text-align: center; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; font-size: 14px; }
-        .picker-item:hover { background: #3b82f6; color: white; }
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --bg-light: #f3f4f6;
+            --card-light: #ffffff;
+            --text-light: #1f2937;
+        }
+
+        .dark-theme {
+            --bg-light: #0b0f1a;
+            --card-light: #161b2c;
+            --text-light: #f3f4f6;
+        }
+
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dark-theme .glass {
+            background: rgba(22, 27, 44, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .summary-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+
+        .card-shadow {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .active-scale:active {
+            transform: scale(0.96);
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        @keyframes modalSlideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .animate-modal {
+            animation: modalSlideUp 0.3s ease-out forwards;
+        }
     </style>
 </head>
-<body>
+<body class="min-h-screen pb-24">
 
-    <div id="captureArea" class="max-w-md mx-auto main-container">
-        <!-- তারিখ ফিল্টার সেকশন -->
-        <div class="flex gap-2 mb-6" data-html2canvas-ignore="true">
-            <div class="filter-box" id="boxDay">
-                <span class="text-[10px] opacity-50 block uppercase font-bold">দিন</span>
-                <span class="text-lg font-bold" id="valDay">--</span>
+    <!-- Top Floating Header -->
+    <nav class="sticky top-0 z-40 px-4 py-3 glass mb-4">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-300 dark:shadow-none">দ</div>
+                <div>
+                    <h1 class="font-bold text-lg leading-none">দোকানের হিসাব</h1>
+                    <span class="text-[10px] opacity-60 font-semibold uppercase tracking-wider">Premium Dashboard</span>
+                </div>
             </div>
-            <div class="filter-box" id="boxMonth">
-                <span class="text-[10px] opacity-50 block uppercase font-bold">মাস</span>
-                <span class="text-sm font-bold" id="valMonth">--</span>
+            <button id="btnTheme" class="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800 border dark:border-slate-700 shadow-sm transition-all active-scale">
+                <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l.707-.707M6.343 6.343l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-md mx-auto px-4">
+        
+        <!-- Date Filters (Modern Pills) -->
+        <div class="flex items-center gap-2 mb-6 overflow-x-auto no-scrollbar py-1" data-html2canvas-ignore="true">
+            <div id="boxDay" class="flex-shrink-0 px-4 py-2 bg-white dark:bg-slate-800 rounded-2xl border dark:border-slate-700 flex flex-col items-center cursor-pointer active-scale shadow-sm">
+                <span class="text-[9px] opacity-50 font-bold">দিন</span>
+                <span id="valDay" class="font-bold text-indigo-600">--</span>
             </div>
-            <div class="filter-box" id="boxYear">
-                <span class="text-[10px] opacity-50 block uppercase font-bold">বছর</span>
-                <span class="text-lg font-bold" id="valYear">----</span>
+            <div id="boxMonth" class="flex-shrink-0 px-4 py-2 bg-white dark:bg-slate-800 rounded-2xl border dark:border-slate-700 flex flex-col items-center cursor-pointer active-scale shadow-sm">
+                <span class="text-[9px] opacity-50 font-bold">মাস</span>
+                <span id="valMonth" class="font-bold text-indigo-600">--</span>
             </div>
-            <!-- নতুন "আজ" বক্স -->
-            <div class="filter-box flex items-center justify-center" id="boxToday">
-                <span class="text-sm font-bold uppercase">আজ</span>
+            <div id="boxYear" class="flex-shrink-0 px-4 py-2 bg-white dark:bg-slate-800 rounded-2xl border dark:border-slate-700 flex flex-col items-center cursor-pointer active-scale shadow-sm">
+                <span class="text-[9px] opacity-50 font-bold">বছর</span>
+                <span id="valYear" class="font-bold text-indigo-600">----</span>
+            </div>
+            <div class="h-10 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1"></div>
+            <button id="boxToday" class="flex-shrink-0 px-5 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-2xl border border-indigo-100 dark:border-indigo-800 active-scale">আজ</button>
+            <button id="boxReport" class="flex-shrink-0 px-5 py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-bold rounded-2xl border border-emerald-100 dark:border-emerald-800 active-scale">রিপোর্ট</button>
+        </div>
+
+        <div id="captureArea" class="space-y-4">
+            <!-- Balance Card -->
+            <div class="summary-gradient rounded-[32px] p-8 text-white shadow-xl relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl"></div>
+                <div class="relative z-10">
+                    <p class="text-indigo-100 text-xs font-bold uppercase tracking-widest opacity-80 mb-1" id="currentDateDisp">লোড হচ্ছে...</p>
+                    <h2 class="text-4xl font-black mb-1" id="totalBalance">৳ ০</h2>
+                    <p class="text-[10px] text-white/60 font-medium uppercase tracking-tighter">ক্যাশে নগদ জমা (ক্লোজিং)</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 mt-8 relative z-10">
+                    <div class="bg-white/10 backdrop-blur-md p-3 rounded-2xl">
+                        <span class="text-[10px] text-white/50 block font-bold uppercase">মোট বিক্রি</span>
+                        <strong class="text-xl" id="topNetProfit">৳ ০</strong>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md p-3 rounded-2xl">
+                        <span class="text-[10px] text-white/50 block font-bold uppercase">নগদ বিক্রি</span>
+                        <strong class="text-xl" id="productSaleOnly">৳ ০</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List of Action Items -->
+            <div class="grid grid-cols-1 gap-3">
+                <!-- Opening -->
+                <div id="cardOpening" class="bg-white dark:bg-slate-800 p-4 rounded-3xl flex justify-between items-center cursor-pointer border dark:border-slate-700 active-scale card-shadow">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-2xl flex items-center justify-center text-blue-600 text-xl">💸</div>
+                        <div>
+                            <h4 class="font-bold text-base leading-none mb-1">ওপেনিং ক্যাশ</h4>
+                            <p class="text-[10px] opacity-40 font-medium uppercase">সকালের ব্যালেন্স</p>
+                        </div>
+                    </div>
+                    <span id="dispOpening" class="font-bold text-lg text-blue-600">৳ ০</span>
+                </div>
+
+                <!-- Expense -->
+                <div id="cardExpense" class="bg-white dark:bg-slate-800 p-4 rounded-3xl flex justify-between items-center cursor-pointer border-l-4 border-l-orange-500 active-scale card-shadow">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/40 rounded-2xl flex items-center justify-center text-orange-600 text-xl">🍱</div>
+                        <div>
+                            <h4 class="font-bold text-base leading-none mb-1">মনদুভ খরচ</h4>
+                            <p class="text-[10px] opacity-40 font-medium uppercase">আজকের ব্যয়</p>
+                        </div>
+                    </div>
+                    <span id="dispMandub" class="font-bold text-lg text-orange-600">৳ ০</span>
+                </div>
+
+                <!-- Due -->
+                <div id="cardDue" class="bg-white dark:bg-slate-800 p-4 rounded-3xl flex justify-between items-center cursor-pointer border-l-4 border-l-rose-500 active-scale card-shadow">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-rose-100 dark:bg-rose-900/40 rounded-2xl flex items-center justify-center text-rose-600 text-xl">📝</div>
+                        <div>
+                            <h4 class="font-bold text-base leading-none mb-1">বাকি বিক্রি</h4>
+                            <p class="text-[10px] opacity-40 font-medium uppercase">কাস্টমার বাকি</p>
+                        </div>
+                    </div>
+                    <span id="dispDue" class="font-bold text-lg text-rose-600">৳ ০</span>
+                </div>
+
+                <!-- Bkash -->
+                <div id="cardBkash" class="bg-white dark:bg-slate-800 p-4 rounded-3xl flex justify-between items-center cursor-pointer border-l-4 border-l-purple-500 active-scale card-shadow">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center text-purple-600 text-xl">📱</div>
+                        <div>
+                            <h4 class="font-bold text-base leading-none mb-1">বিকাশ-নগদ</h4>
+                            <p id="bkashDetail" class="text-[10px] opacity-40 font-medium uppercase italic leading-tight">পাঠানো: ০ | আনা: ০</p>
+                        </div>
+                    </div>
+                    <span id="dispBkash" class="font-bold text-lg text-purple-600">৳ ০</span>
+                </div>
+
+                <!-- Closing -->
+                <div id="cardClosing" class="bg-white dark:bg-slate-800 p-4 rounded-3xl flex justify-between items-center cursor-pointer border-l-4 border-l-emerald-500 active-scale card-shadow">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center text-emerald-600 text-xl">🏦</div>
+                        <div>
+                            <h4 class="font-bold text-base leading-none mb-1">ক্লোজিং ক্যাশ</h4>
+                            <p class="text-[10px] opacity-40 font-medium uppercase">দিন শেষে গাল্লা</p>
+                        </div>
+                    </div>
+                    <span id="dispClosing" class="font-bold text-lg text-emerald-600">৳ ০</span>
+                </div>
             </div>
         </div>
 
-        <header class="flex justify-between items-center mb-6">
-            <div class="text-left">
-                <h1 class="text-2xl font-bold">আয়-ব্যয় ট্র্যাকার</h1>
-                <p class="text-sm opacity-70" id="currentDateDisp"></p>
-            </div>
-            <div class="flex gap-2" data-html2canvas-ignore="true">
-                <button id="btnExport" class="p-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812-1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                </button>
-                <button id="btnTheme" class="p-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
-                    <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l.707-.707M6.343 6.343l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-                    <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                </button>
-            </div>
-        </header>
+        <button id="btnExport" class="w-full mt-6 py-5 bg-slate-900 dark:bg-indigo-600 text-white font-bold rounded-3xl shadow-xl flex items-center justify-center gap-2 active-scale transition-all" data-html2canvas-ignore="true">
+            📸 স্ক্রিনশট সেভ করুন
+        </button>
+    </main>
 
-        <div class="space-y-4 mb-6">
-            <div class="bg-slate-900 p-6 rounded-3xl shadow-lg text-white text-center">
-                <span class="text-slate-400 text-sm block mb-1">মোট ক্যাশ ইন হ্যান্ড (গাল্লা)</span>
-                <h2 class="text-4xl font-bold" id="totalBalance">৳ ০.০০</h2>
+    <!-- Entry Modal (Advanced Slide-up) -->
+    <div id="entryModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-t-[40px] p-6 shadow-2xl animate-modal max-h-[90vh] flex flex-col">
+            <div class="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-6"></div>
+            <div class="flex justify-between items-center mb-6 px-2">
+                <h3 class="text-xl font-bold" id="modalTitle">টাইটেল</h3>
+                <button id="closeEntryModal" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-full">✕</button>
             </div>
             
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 text-center">
-                    <span class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase block mb-1">আজকের নিট বিক্রি</span>
-                    <strong class="text-lg text-emerald-500" id="topNetProfit">৳ ০</strong>
-                </div>
-                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 text-center">
-                    <span class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase block mb-1">শুধুমাত্র পণ্য বিক্রি</span>
-                    <strong class="text-lg text-blue-500" id="productSaleOnly">৳ ০</strong>
-                </div>
+            <div id="modalInputs" class="mb-4"></div>
+            
+            <div id="modalList" class="flex-1 overflow-y-auto custom-scroll space-y-2 mb-4 px-1">
+                <!-- Data List -->
             </div>
-
-            <div class="space-y-2 mt-6">
-                <div class="summary-card">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-blue-500/10 rounded-lg text-blue-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        </div>
-                        <span class="font-semibold">ওপেনিং ক্যাশ</span>
-                    </div>
-                    <strong id="dispOpening">৳ ০</strong>
-                </div>
-
-                <div class="summary-card">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-orange-500/10 rounded-lg text-orange-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                        </div>
-                        <span class="font-semibold">মনদুভ বিল (খরচ)</span>
-                    </div>
-                    <strong class="text-orange-500" id="dispMandub">৳ ০</strong>
-                </div>
-
-                <div class="summary-card" id="bkashCard">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-purple-500/10 rounded-lg text-purple-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                        </div>
-                        <div>
-                            <span class="font-semibold block">বিকাশ-নগদ নিট</span>
-                            <span class="text-[9px] opacity-50" id="bkashDetail">পাঠানো: ০ | রিয়াল আনা: ০</span>
-                        </div>
-                    </div>
-                    <strong class="text-purple-600" id="dispBkash">৳ ০</strong>
-                </div>
-
-                <div class="summary-card">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-indigo-500/10 rounded-lg text-indigo-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                        <span class="font-semibold">ক্লোজিং ক্যাশ</span>
-                    </div>
-                    <strong id="dispClosing">৳ ০</strong>
-                </div>
+            
+            <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-3xl flex justify-between items-center border dark:border-slate-800">
+                <span class="text-xs font-bold opacity-50 uppercase tracking-widest">মোট পরিমাণ</span>
+                <strong id="modalTotalDisp" class="text-2xl font-black text-indigo-600">৳ ০</strong>
             </div>
         </div>
     </div>
 
-    <!-- ক্যাশ আপডেট বাটন -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-4 py-3 flex justify-around items-center z-40 max-w-md mx-auto rounded-t-2xl">
-        <button id="btnCashCalc" class="flex flex-col items-center gap-1 opacity-60 p-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-            <span class="text-[10px] font-bold uppercase">ক্যাশ আপডেট</span>
-        </button>
-    </div>
-
-    <!-- তারিখ পিকার মডাল -->
-    <div id="pickerModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-[60] p-6">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl p-6 shadow-2xl overflow-hidden">
-            <h3 class="text-xl font-bold mb-4" id="pickerTitle">সিলেক্ট করুন</h3>
-            <div class="picker-grid max-h-[300px] overflow-y-auto pr-2" id="pickerGrid"></div>
-            <button id="closePicker" class="w-full mt-4 py-3 bg-slate-100 dark:bg-slate-700 font-bold rounded-xl">বন্ধ করুন</button>
+    <!-- Date Picker Modal -->
+    <div id="pickerModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-6">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 px-2" id="pickerTitle">সিলেক্ট করুন</h3>
+            <div class="grid grid-cols-4 gap-2 max-h-[300px] overflow-y-auto custom-scroll pr-2" id="pickerGrid"></div>
+            <button id="closePicker" class="w-full mt-6 py-4 bg-slate-100 dark:bg-slate-800 font-bold rounded-2xl active-scale">বন্ধ করুন</button>
         </div>
     </div>
 
-    <!-- বিকাশ-নগদ মডাল -->
-    <div id="bkashModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-end justify-center z-50 p-4">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-t-[32px] p-6 shadow-2xl transform translate-y-full transition-transform duration-300 flex flex-col max-h-[90vh]" id="bkashModalContent">
+    <!-- Report Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[70] flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] p-6 shadow-2xl flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold">বিকাশ-নগদ ট্র্যাকার</h3>
-                <button id="btnBkashClose" class="p-2 bg-slate-100 dark:bg-slate-700 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                </button>
+                <h3 class="text-xl font-bold">রিপোর্ট সামারি</h3>
+                <button id="closeReport" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-full">✕</button>
             </div>
-            <div class="space-y-3 mb-6">
-                <div class="grid grid-cols-2 gap-2">
-                    <select id="bkashMethod" class="p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-xl focus:outline-none text-sm font-semibold">
-                        <option value="bKash">বিকাশ</option>
-                        <option value="Nagad">নগদ</option>
-                    </select>
-                    <select id="bkashType" class="p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-xl focus:outline-none text-sm font-semibold">
-                        <option value="টাকা পাঠানো">টাকা পাঠানো (ক্যাশ জমা)</option>
-                        <option value="রিয়াল আনা">রিয়াল আনা (ক্যাশ খরচ)</option>
-                    </select>
-                </div>
-                <div class="flex gap-2">
-                    <input type="number" id="bkashAmt" placeholder="টাকার পরিমাণ" class="flex-1 p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-xl focus:outline-none">
-                    <button id="btnBkashAdd" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold">যোগ</button>
-                </div>
+            <div class="flex gap-2 mb-6">
+                <button id="btnWeekly" class="flex-1 py-4 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-2xl active-scale border border-indigo-100 dark:border-indigo-800">সাপ্তাহিক</button>
+                <button id="btnMonthly" class="flex-1 py-4 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-bold rounded-2xl active-scale border border-emerald-100 dark:border-emerald-800">মাসিক</button>
             </div>
-            <div class="flex-1 overflow-y-auto transaction-list space-y-2" id="bkashList"></div>
-        </div>
-    </div>
-
-    <!-- ডেইলি ক্যাশ মডাল -->
-    <div id="cashModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-end justify-center z-50 p-4">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-t-[32px] p-6 shadow-2xl transform translate-y-full transition-transform duration-300" id="cashModalContent">
-            <h3 class="text-xl font-bold mb-6">ডেইলি ক্যাশ আপডেট</h3>
-            <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-                <div>
-                    <label class="block text-xs font-bold opacity-50 uppercase mb-1">ওপেনিং ক্যাশ (সকালের গাল্লা)</label>
-                    <input type="number" id="openingCash" class="w-full p-4 bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-2xl focus:outline-none">
+            <div id="reportCaptureArea" class="bg-slate-50 dark:bg-slate-950 p-6 rounded-[24px] border border-slate-200 dark:border-slate-800">
+                <div class="text-center mb-4">
+                    <h4 class="text-lg font-bold" id="reportTitle">রিপোর্ট</h4>
+                    <p class="text-[10px] opacity-40 font-bold tracking-widest uppercase" id="reportRange">...</p>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold opacity-50 uppercase mb-1">ক্লোজিং ক্যাশ (রাতের গাল্লা)</label>
-                    <input type="number" id="closingCash" class="w-full p-4 bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-2xl focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-orange-500 uppercase mb-1">মনদুভ বিল (ক্যাশ খরচ)</label>
-                    <input type="number" id="mandubInput" class="w-full p-4 bg-orange-50 dark:bg-slate-700 border border-orange-200 rounded-2xl focus:outline-none">
-                </div>
-                <div class="flex gap-3 pt-4 pb-2">
-                    <button id="btnCashCancel" class="flex-1 py-4 bg-slate-100 dark:bg-slate-700 font-bold rounded-2xl">বন্ধ</button>
-                    <button id="btnCashSave" class="flex-[2] py-4 bg-blue-600 text-white font-bold rounded-2xl">সেভ</button>
-                </div>
+                <div id="reportContent" class="space-y-3"></div>
             </div>
+            <button id="btnDownloadReport" class="w-full mt-6 py-5 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg active-scale">ফটো ডাউনলোড করুন</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue, serverTimestamp, set, remove, off } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+        import { getDatabase, ref, push, onValue, set, remove, off, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
+        // Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDgFaTrHW7Grp_Q22p6KNcHZxaEujHsLsE",
             databaseURL: "https://exchange-project-d4028-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -213,183 +272,288 @@
 
         const banglaMonths = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"];
         const banglaDigits = {'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯'};
-
         const toBangla = (num) => num.toString().split('').map(d => banglaDigits[d] || d).join('');
 
-        // বর্তমান অবস্থা
         let now = new Date();
         let currentS = { d: now.getDate(), m: now.getMonth(), y: now.getFullYear() };
         let activeListeners = [];
 
-        // UI Helpers
-        const toggleModal = (modal, show) => {
-            if(show) modal.classList.remove('hidden');
-            else modal.classList.add('hidden');
+        // UI Core Functions
+        const toggleModal = (id, show) => {
+            const el = document.getElementById(id);
+            if (show) {
+                el.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                el.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
         };
 
-        const animateModal = (modal, content, show) => {
-            if(show) { modal.classList.remove('hidden'); setTimeout(() => content.classList.remove('translate-y-full'), 10); }
-            else { content.classList.add('translate-y-full'); setTimeout(() => modal.classList.add('hidden'), 300); }
+        const getDateKey = (date) => {
+            const d = date || new Date(currentS.y, currentS.m, currentS.d);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         };
-
-        const updateFilterUI = () => {
-            document.getElementById('valDay').innerText = toBangla(currentS.d);
-            document.getElementById('valMonth').innerText = banglaMonths[currentS.m];
-            document.getElementById('valYear').innerText = toBangla(currentS.y);
-            
-            const fullDateStr = `${toBangla(currentS.d)} ${banglaMonths[currentS.m]} ${toBangla(currentS.y)}`;
-            document.getElementById('currentDateDisp').innerText = fullDateStr;
-            
-            refreshData();
-        };
-
-        const getDateKey = () => `${currentS.y}-${String(currentS.m + 1).padStart(2, '0')}-${String(currentS.d).padStart(2, '0')}`;
 
         const refreshData = () => {
-            activeListeners.forEach(l => off(l.ref));
+            activeListeners.forEach(l => off(l.ref)); 
             activeListeners = [];
-
             const dateKey = getDateKey();
             const cashRef = ref(db, `daily_records/${dateKey}/cash`);
-            const bkTransRef = ref(db, `daily_records/${dateKey}/bkash_transactions`);
 
-            const cashL = onValue(cashRef, (snap) => {
+            onValue(cashRef, (snap) => {
                 const data = snap.val() || {};
                 const op = data.opening || 0;
                 const cl = data.closing || 0;
-                const md = data.mandub || 0;
-                const bk_in = data.bk_in || 0;
-                const bk_out = data.bk_out || 0;
+                const ex = data.expense_total || 0;
+                const du = data.due_total || 0;
+                const bin = data.bk_in || 0;
+                const bout = data.bk_out || 0;
 
                 document.getElementById('dispOpening').innerText = `৳ ${op}`;
                 document.getElementById('dispClosing').innerText = `৳ ${cl}`;
-                document.getElementById('dispMandub').innerText = `৳ ${md}`;
-                document.getElementById('dispBkash').innerText = `৳ ${bk_in - bk_out}`;
-                document.getElementById('bkashDetail').innerText = `পাঠানো (ক্যাশ +): ${bk_in} | আনা (ক্যাশ -): ${bk_out}`;
+                document.getElementById('dispMandub').innerText = `৳ ${ex}`;
+                document.getElementById('dispDue').innerText = `৳ ${du}`;
+                document.getElementById('dispBkash').innerText = `৳ ${bin - bout}`;
+                document.getElementById('bkashDetail').innerText = `পাঠানো: ${bin} | আনা: ${bout}`;
                 
-                const netSale = (cl + md + bk_out) - (op + bk_in);
-                document.getElementById('topNetProfit').innerText = `৳ ${netSale}`;
-                document.getElementById('productSaleOnly').innerText = `৳ ${netSale}`;
+                const cashSale = (cl + ex + bout) - (op + bin);
+                const totalSale = cashSale + du;
+
+                document.getElementById('topNetProfit').innerText = `৳ ${totalSale}`;
+                document.getElementById('productSaleOnly').innerText = `৳ ${cashSale}`;
                 document.getElementById('totalBalance').innerText = `৳ ${cl}`;
-                
-                document.getElementById('openingCash').value = op;
-                document.getElementById('closingCash').value = cl;
-                document.getElementById('mandubInput').value = md;
             });
             activeListeners.push({ ref: cashRef });
+        };
 
-            const bkL = onValue(bkTransRef, (snap) => {
-                const listDiv = document.getElementById('bkashList');
-                const data = snap.val();
-                listDiv.innerHTML = "";
-                let inT = 0; let outT = 0;
+        // Entry Modal Builder
+        const openDetailModal = (type) => {
+            const dateKey = getDateKey();
+            const modalTitle = document.getElementById('modalTitle');
+            const inputs = document.getElementById('modalInputs');
+            const totalDisp = document.getElementById('modalTotalDisp');
+            let path = "";
 
-                if(!data) {
-                    listDiv.innerHTML = '<p class="text-center text-slate-400 py-10">লেনদেন নেই</p>';
-                    set(ref(db, `daily_records/${dateKey}/cash/bk_in`), 0);
-                    set(ref(db, `daily_records/${dateKey}/cash/bk_out`), 0);
-                    return;
+            if(type === 'bkash') {
+                modalTitle.innerText = "বিকাশ-নগদ হিসাব";
+                inputs.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <select id="mSub1" class="p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold"><option value="bKash">বিকাশ</option><option value="Nagad">নগদ</option></select>
+                        <select id="mSub2" class="p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold"><option value="টাকা পাঠানো">টাকা পাঠানো (+)</option><option value="রিয়াল আনা">রিয়াল আনা (-)</option></select>
+                    </div>
+                    <input type="number" id="mAmount" placeholder="টাকার পরিমাণ লিখুন" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold text-lg mb-2">
+                    <button id="mAdd" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 dark:shadow-none active-scale">এন্ট্রি যোগ করুন</button>`;
+                path = `daily_records/${dateKey}/bkash_transactions`;
+            } else if(type === 'due') {
+                modalTitle.innerText = "বাকির বিবরণ";
+                inputs.innerHTML = `
+                    <input type="text" id="mSub1" placeholder="কাস্টমারের নাম" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none mb-2">
+                    <input type="number" id="mAmount" placeholder="টাকার পরিমাণ" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold text-lg mb-2">
+                    <button id="mAdd" class="w-full bg-rose-600 text-white py-4 rounded-2xl font-bold active-scale">বাকি যোগ করুন</button>`;
+                path = `daily_records/${dateKey}/due_transactions`;
+            } else if(type === 'expense') {
+                modalTitle.innerText = "খরচের বিবরণ (মনদুভ)";
+                inputs.innerHTML = `
+                    <input type="text" id="mSub1" placeholder="খরচের বিবরণ (যেমন: নাস্তা)" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none mb-2">
+                    <input type="number" id="mAmount" placeholder="টাকার পরিমাণ" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold text-lg mb-2">
+                    <button id="mAdd" class="w-full bg-orange-600 text-white py-4 rounded-2xl font-bold active-scale">খরচ যোগ করুন</button>`;
+                path = `daily_records/${dateKey}/expense_transactions`;
+            }
+
+            document.getElementById('mAdd').onclick = async () => {
+                const s1 = document.getElementById('mSub1').value;
+                const amt = parseFloat(document.getElementById('mAmount').value);
+                if(!amt) return;
+                const data = type === 'bkash' ? { method: s1, type: document.getElementById('mSub2').value, amount: amt } : { name: s1, amount: amt };
+                await push(ref(db, path), data);
+                document.getElementById('mAmount').value = "";
+            };
+
+            onValue(ref(db, path), (snap) => {
+                const list = document.getElementById('modalList');
+                list.innerHTML = "";
+                let total = 0, bin = 0, bout = 0;
+                if(snap.exists()) {
+                    Object.entries(snap.val()).reverse().forEach(([k, v]) => {
+                        const isBkash = type === 'bkash';
+                        if(isBkash) { if(v.type === "টাকা পাঠানো") bin += v.amount; else bout += v.amount; } else total += v.amount;
+                        list.innerHTML += `
+                            <div class="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border dark:border-slate-700">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-sm">${isBkash ? v.method : v.name}</span>
+                                    <span class="text-[9px] font-bold uppercase ${v.type==='টাকা পাঠানো' ? 'text-indigo-500' : (v.type ? 'text-rose-500' : 'text-slate-400')}">
+                                        ${v.type || 'সাধারণ এন্ট্রি'}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <strong class="text-indigo-600 dark:text-indigo-400">৳ ${v.amount}</strong> 
+                                    <button onclick="delEntry('${path}/${k}')" class="w-8 h-8 flex items-center justify-center bg-rose-50 dark:bg-rose-900/30 text-rose-500 rounded-xl">✕</button>
+                                </div>
+                            </div>`;
+                    });
                 }
-
-                Object.entries(data).reverse().forEach(([key, val]) => {
-                    if(val.type === "টাকা পাঠানো") inT += val.amount;
-                    else if(val.type === "রিয়াল আনা") outT += val.amount;
-
-                    const item = document.createElement('div');
-                    item.className = "flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-100 dark:border-slate-700";
-                    item.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${val.method === 'bKash' ? 'bg-pink-100 text-pink-600' : 'bg-orange-100 text-orange-600'}">${val.method === 'bKash' ? 'Bk' : 'Ng'}</div>
-                            <div><div class="text-xs font-bold">${val.type}</div><div class="text-[9px] opacity-40">${val.method}</div></div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <strong class="text-sm">৳ ${val.amount}</strong>
-                            <button class="text-rose-400 del-btn" data-id="${key}"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                        </div>`;
-                    listDiv.appendChild(item);
-                });
-
-                document.querySelectorAll('.del-btn').forEach(b => b.onclick = () => {
-                    if(confirm('ডিলিট করতে চান?')) remove(ref(db, `daily_records/${dateKey}/bkash_transactions/${b.dataset.id}`));
-                });
-
-                set(ref(db, `daily_records/${dateKey}/cash/bk_in`), inT);
-                set(ref(db, `daily_records/${dateKey}/cash/bk_out`), outT);
+                if(type === 'bkash') { 
+                    totalDisp.innerText = `৳ ${bin - bout}`;
+                    set(ref(db, `daily_records/${dateKey}/cash/bk_in`), bin); 
+                    set(ref(db, `daily_records/${dateKey}/cash/bk_out`), bout);
+                } else {
+                    totalDisp.innerText = `৳ ${total}`;
+                    set(ref(db, `daily_records/${dateKey}/cash/${type === 'due' ? 'due_total' : 'expense_total'}`), total);
+                }
             });
-            activeListeners.push({ ref: bkTransRef });
+            toggleModal('entryModal', true);
+        };
+
+        window.delEntry = (fullPath) => confirm('আপনি কি এটি নিশ্চিতভাবে ডিলিট করতে চান?') ? remove(ref(db, fullPath)) : null;
+
+        // Event Handlers
+        document.getElementById('cardBkash').onclick = () => openDetailModal('bkash');
+        document.getElementById('cardDue').onclick = () => openDetailModal('due');
+        document.getElementById('cardExpense').onclick = () => openDetailModal('expense');
+        document.getElementById('closeEntryModal').onclick = () => toggleModal('entryModal', false);
+
+        document.getElementById('cardOpening').onclick = () => { 
+            const v = prompt('ওপেনিং ক্যাশ লিখুন:'); 
+            if(v) set(ref(db, `daily_records/${getDateKey()}/cash/opening`), parseFloat(v)); 
+        };
+        document.getElementById('cardClosing').onclick = () => { 
+            const v = prompt('ক্লোজিং ক্যাশ লিখুন:'); 
+            if(v) set(ref(db, `daily_records/${getDateKey()}/cash/closing`), parseFloat(v)); 
+        };
+
+        // Date Picker Implementation
+        const updateUI = () => {
+            document.getElementById('valDay').innerText = toBangla(currentS.d);
+            document.getElementById('valMonth').innerText = banglaMonths[currentS.m];
+            document.getElementById('valYear').innerText = toBangla(currentS.y);
+            document.getElementById('currentDateDisp').innerText = `${toBangla(currentS.d)} ${banglaMonths[currentS.m]} ${toBangla(currentS.y)}`;
+            refreshData();
         };
 
         const showPicker = (type) => {
-            const grid = document.getElementById('pickerGrid');
-            grid.innerHTML = "";
-            let title = "";
+            const grid = document.getElementById('pickerGrid'); grid.innerHTML = "";
+            document.getElementById('pickerTitle').innerText = type === 'day' ? "দিন সিলেক্ট করুন" : (type === 'month' ? "মাস সিলেক্ট করুন" : "বছর সিলেক্ট করুন");
             
             if(type === 'day') {
-                title = "দিন সিলেক্ট করুন";
                 for(let i=1; i<=31; i++) {
-                    const btn = document.createElement('div'); btn.className = "picker-item"; btn.innerText = toBangla(i);
-                    btn.onclick = () => { currentS.d = i; updateFilterUI(); toggleModal(document.getElementById('pickerModal'), false); };
-                    grid.appendChild(btn);
+                    const b = document.createElement('div');
+                    b.className="p-3 text-center rounded-xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold cursor-pointer active-scale";
+                    b.innerText=toBangla(i);
+                    b.onclick = () => { currentS.d=i; updateUI(); toggleModal('pickerModal', false); };
+                    grid.appendChild(b);
                 }
             } else if(type === 'month') {
-                title = "মাস সিলেক্ট করুন";
-                banglaMonths.forEach((m, idx) => {
-                    const btn = document.createElement('div'); btn.className = "picker-item"; btn.innerText = m;
-                    btn.onclick = () => { currentS.m = idx; updateFilterUI(); toggleModal(document.getElementById('pickerModal'), false); };
-                    grid.appendChild(btn);
+                banglaMonths.forEach((m, i) => {
+                    const b = document.createElement('div');
+                    b.className="col-span-2 p-3 text-center rounded-xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold cursor-pointer active-scale";
+                    b.innerText=m;
+                    b.onclick = () => { currentS.m=i; updateUI(); toggleModal('pickerModal', false); };
+                    grid.appendChild(b);
                 });
-            } else if(type === 'year') {
-                title = "বছর সিলেক্ট করুন";
-                for(let i=2024; i<=2030; i++) {
-                    const btn = document.createElement('div'); btn.className = "picker-item"; btn.innerText = toBangla(i);
-                    btn.onclick = () => { currentS.y = i; updateFilterUI(); toggleModal(document.getElementById('pickerModal'), false); };
-                    grid.appendChild(btn);
+            } else {
+                for(let i=2025; i<=2030; i++) {
+                    const b = document.createElement('div');
+                    b.className="col-span-2 p-3 text-center rounded-xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold cursor-pointer active-scale";
+                    b.innerText=toBangla(i);
+                    b.onclick = () => { currentS.y=i; updateUI(); toggleModal('pickerModal', false); };
+                    grid.appendChild(b);
                 }
             }
-            document.getElementById('pickerTitle').innerText = title;
-            toggleModal(document.getElementById('pickerModal'), true);
+            toggleModal('pickerModal', true);
         };
 
-        // ইভেন্ট লিসেনারস
         document.getElementById('boxDay').onclick = () => showPicker('day');
         document.getElementById('boxMonth').onclick = () => showPicker('month');
         document.getElementById('boxYear').onclick = () => showPicker('year');
-        document.getElementById('closePicker').onclick = () => toggleModal(document.getElementById('pickerModal'), false);
-
-        // "আজ" বাটনের লজিক
-        document.getElementById('boxToday').onclick = () => {
-            let today = new Date();
-            currentS = { d: today.getDate(), m: today.getMonth(), y: today.getFullYear() };
-            updateFilterUI();
+        document.getElementById('boxToday').onclick = () => { 
+            let t = new Date(); 
+            currentS = { d: t.getDate(), m: t.getMonth(), y: t.getFullYear() }; 
+            updateUI(); 
         };
+        document.getElementById('closePicker').onclick = () => toggleModal('pickerModal', false);
 
-        document.getElementById('btnCashCalc').onclick = () => animateModal(document.getElementById('cashModal'), document.getElementById('cashModalContent'), true);
-        document.getElementById('btnCashCancel').onclick = () => animateModal(document.getElementById('cashModal'), document.getElementById('cashModalContent'), false);
-        document.getElementById('bkashCard').onclick = () => animateModal(document.getElementById('bkashModal'), document.getElementById('bkashModalContent'), true);
-        document.getElementById('btnBkashClose').onclick = () => animateModal(document.getElementById('bkashModal'), document.getElementById('bkashModalContent'), false);
+        // Report System
+        const generateReport = async (type) => {
+            const content = document.getElementById('reportContent');
+            content.innerHTML = `<div class="p-8 text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div></div>`;
+            let dates = [];
+            
+            if(type === 'weekly') {
+                for(let i=0; i<7; i++) { 
+                    let d = new Date(currentS.y, currentS.m, currentS.d); 
+                    d.setDate(d.getDate() - i); 
+                    dates.push(getDateKey(d)); 
+                }
+                document.getElementById('reportTitle').innerText = "সাপ্তাহিক রিপোর্ট";
+            } else {
+                const last = new Date(currentS.y, currentS.m + 1, 0).getDate();
+                for(let i=1; i<=last; i++) dates.push(`${currentS.y}-${String(currentS.m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`);
+                document.getElementById('reportTitle').innerText = banglaMonths[currentS.m] + " মাসের রিপোর্ট";
+            }
+            
+            const snapshot = await get(ref(db, `daily_records`));
+            const all = snapshot.val() || {};
+            let t = { net: 0, cash: 0, exp: 0, due: 0 };
 
-        document.getElementById('btnCashSave').onclick = async () => {
-            const dateKey = getDateKey();
-            const op = parseFloat(document.getElementById('openingCash').value) || 0;
-            const cl = parseFloat(document.getElementById('closingCash').value) || 0;
-            const md = parseFloat(document.getElementById('mandubInput').value) || 0;
-            await set(ref(db, `daily_records/${dateKey}/cash/opening`), op);
-            await set(ref(db, `daily_records/${dateKey}/cash/closing`), cl);
-            await set(ref(db, `daily_records/${dateKey}/cash/mandub`), md);
-            animateModal(document.getElementById('cashModal'), document.getElementById('cashModalContent'), false);
-        };
-
-        document.getElementById('btnBkashAdd').onclick = async () => {
-            const dateKey = getDateKey();
-            const amt = parseFloat(document.getElementById('bkashAmt').value);
-            if(!amt || amt <= 0) return;
-            await push(ref(db, `daily_records/${dateKey}/bkash_transactions`), {
-                method: document.getElementById('bkashMethod').value,
-                type: document.getElementById('bkashType').value,
-                amount: amt,
-                timestamp: serverTimestamp()
+            dates.forEach(d => {
+                if(all[d]) {
+                    const day = all[d].cash || {};
+                    const cs = ( (day.closing||0) + (day.expense_total||0) + (day.bk_out||0) ) - ( (day.opening||0) + (day.bk_in||0) );
+                    t.cash += cs; t.due += (day.due_total||0); t.exp += (day.expense_total||0); t.net += (cs + (day.due_total||0));
+                }
             });
-            document.getElementById('bkashAmt').value = "";
+
+            content.innerHTML = `
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                        <span class="opacity-60 text-[10px] font-bold uppercase block mb-1">নিট বিক্রি</span>
+                        <div class="text-xl font-black text-emerald-600 dark:text-emerald-400">৳ ${t.net}</div>
+                    </div>
+                    <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                        <span class="opacity-60 text-[10px] font-bold uppercase block mb-1">নগদ বিক্রি</span>
+                        <div class="text-xl font-black text-indigo-600 dark:text-indigo-400">৳ ${t.cash}</div>
+                    </div>
+                    <div class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-800">
+                        <span class="opacity-60 text-[10px] font-bold uppercase block mb-1">মোট খরচ</span>
+                        <div class="text-xl font-black text-orange-600 dark:text-orange-400">৳ ${t.exp}</div>
+                    </div>
+                    <div class="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800">
+                        <span class="opacity-60 text-[10px] font-bold uppercase block mb-1">মোট বাকি</span>
+                        <div class="text-xl font-black text-rose-600 dark:text-rose-400">৳ ${t.due}</div>
+                    </div>
+                </div>`;
+            document.getElementById('reportRange').innerText = `${toBangla(dates[dates.length-1])} থেকে ${toBangla(dates[0])}`;
+        };
+
+        document.getElementById('boxReport').onclick = () => {
+            toggleModal('reportModal', true); 
+            generateReport('weekly');
+        };
+        document.getElementById('btnWeekly').onclick = () => generateReport('weekly');
+        document.getElementById('btnMonthly').onclick = () => generateReport('monthly');
+        document.getElementById('closeReport').onclick = () => toggleModal('reportModal', false);
+
+        // Export & Theme
+        document.getElementById('btnExport').onclick = () => {
+            html2canvas(document.getElementById('captureArea'), {
+                backgroundColor: document.body.classList.contains('dark-theme') ? '#0b0f1a' : '#f3f4f6',
+                scale: 2
+            }).then(canvas => {
+                const link = document.createElement('a'); 
+                link.download = `Report_${getDateKey()}.png`; 
+                link.href = canvas.toDataURL(); 
+                link.click();
+            });
+        };
+
+        document.getElementById('btnDownloadReport').onclick = () => {
+            html2canvas(document.getElementById('reportCaptureArea'), {
+                backgroundColor: document.body.classList.contains('dark-theme') ? '#0b0f1a' : '#f3f4f6',
+                scale: 2
+            }).then(canvas => {
+                const link = document.createElement('a'); link.download = `Summary_Report.png`; link.href = canvas.toDataURL(); link.click();
+            });
         };
 
         document.getElementById('btnTheme').onclick = () => {
@@ -398,14 +562,8 @@
             document.getElementById('moonIcon').classList.toggle('hidden');
         };
 
-        document.getElementById('btnExport').onclick = () => {
-            html2canvas(document.getElementById('captureArea')).then(canvas => {
-                const link = document.createElement('a'); link.download = `report_${getDateKey()}.png`; link.href = canvas.toDataURL(); link.click();
-            });
-        };
-
-        updateFilterUI();
-
+        // Initialize
+        updateUI();
     </script>
 </body>
 </html>
