@@ -3,272 +3,386 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>দাম ও কেনা দাম মনে রাখুন</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>দাম ও কেনা দাম মনে রাখুন - প্রিমিয়াম ইউআই</title>
+    <!-- Google Fonts: Hind Siliguri for Bengali and Inter for Numbers -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <!-- QR/Barcode Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
-            --primary-color: #1a73e8;
-            --success-color: #34a853;
-            --danger-color: #d93025;
-            --bg-color: #f8f9fa;
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Hind Siliguri', sans-serif;
+            font-family: 'Hind Siliguri', 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: #333;
-            padding: 10px;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 16px;
+            padding-bottom: 100px; /* Space for FAB */
         }
 
         .container {
-            width: 100%;
-            max-width: 500px;
+            max-width: 480px;
             margin: 0 auto;
-            background: #ffffff;
-            padding: 15px;
-            border-radius: 20px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        /* Header Area */
+        .header {
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        .header h2 {
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+            font-size: 24px;
         }
 
         /* Floating Scan Button */
         .main-scan-btn {
             position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 70px;
-            height: 70px;
-            background: var(--primary-color);
+            bottom: 25px;
+            right: 25px;
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 25px rgba(26, 115, 232, 0.4);
+            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
             z-index: 1000;
             cursor: pointer;
             border: 4px solid white;
-            font-size: 30px;
+            font-size: 24px;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
+        .main-scan-btn:active {
+            transform: scale(0.9);
         }
 
-        h2 { color: var(--primary-color); }
+        /* Form Card */
+        .glass-card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
 
-        /* Price Card Popup */
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .form-group { margin-bottom: 16px; }
+        label { 
+            display: block; 
+            font-size: 13px; 
+            font-weight: 600; 
+            margin-bottom: 6px; 
+            color: var(--text-muted); 
+        }
+
+        input {
+            width: 100%; 
+            padding: 14px 16px; 
+            border: 2px solid #f3f4f6; 
+            border-radius: var(--radius-md); 
+            font-size: 15px;
+            background: #f9fafb;
+            transition: all 0.3s ease;
+            color: var(--text-main);
+        }
+
+        input:focus { 
+            border-color: var(--primary-light); 
+            background: white;
+            outline: none; 
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .calculator-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            background: #fcfcff;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            border: 1px dashed #d1d5db;
+            margin-bottom: 16px;
+        }
+
+        .save-btn {
+            width: 100%; 
+            padding: 16px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: var(--radius-md); 
+            font-weight: 700; 
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            transition: all 0.2s;
+        }
+
+        .save-btn:active { transform: translateY(2px); box-shadow: none; }
+
+        /* Search Area */
+        .search-area {
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            margin-bottom: 16px;
+        }
+
+        .search-input {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid #ddd;
+        }
+
+        /* Product List */
+        .product-item {
+            background: white;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #f1f1f1;
+            transition: transform 0.2s;
+        }
+
+        .product-item:active { transform: scale(0.98); background: #f9fafb; }
+
+        .product-info h4 { font-size: 17px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
+        .product-info span { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+        .price-tags-list { text-align: right; }
+        .list-sell-price { font-size: 18px; font-weight: 800; color: var(--success); }
+        .list-buy-price { font-size: 12px; color: var(--danger); font-weight: 600; opacity: 0.8; }
+
+        /* Result Popup (Premium Design) */
         .price-popup {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
             display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 4000;
-            color: white;
-            text-align: center;
             padding: 20px;
         }
 
         .price-card {
             background: white;
-            color: #222;
-            width: 90%;
-            max-width: 350px;
-            padding: 30px;
-            border-radius: 25px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 340px;
+            padding: 40px 30px;
+            border-radius: 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .price-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 8px;
+            background: linear-gradient(to right, var(--success), var(--primary));
         }
 
         .price-card h1 {
-            font-size: 40px;
-            color: var(--success-color);
-            margin: 5px 0;
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--success);
+            margin: 10px 0;
+            font-family: 'Inter';
         }
 
-        .price-card .buy-price-text {
-            font-size: 22px;
-            color: var(--danger-color);
-            margin-bottom: 10px;
-            font-weight: 600;
+        .price-card .label-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #ecfdf5;
+            color: var(--success);
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 8px;
         }
 
-        .price-card p {
-            font-size: 18px;
-            color: #666;
-        }
-
-        .close-popup-btn {
-            margin-top: 20px;
-            padding: 12px 30px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        /* Form Area */
-        .form-card {
-            background: #f1f3f4;
-            padding: 15px;
+        .buy-tag {
+            background: #fef2f2;
+            color: var(--danger);
+            padding: 8px 16px;
             border-radius: 12px;
-            margin-bottom: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 15px;
         }
 
-        .form-group { margin-bottom: 10px; }
-        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #555; }
-        input {
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;
-        }
-        input:focus { border-color: var(--primary-color); outline: none; }
-
-        .calculator-box {
-            background: #e7f0fe;
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border: 1px dashed var(--primary-color);
-        }
-
-        .save-btn {
-            width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
-        }
-        
-        #cancelBtn {
-            width: 100%; padding: 8px; background: #999; color: white; border: none; border-radius: 8px; font-size: 12px; margin-top: 5px; cursor: pointer; display: none;
-        }
-
-        /* List Area */
-        .search-area {
-            display: flex; gap: 8px; margin-bottom: 15px; position: sticky; top: 0; background: white; padding: 10px 0; z-index: 100;
-        }
-
-        .product-item {
-            background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 12px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .product-info { flex: 1; cursor: pointer; }
-        .product-info h4 { font-size: 16px; margin-bottom: 4px; }
-        .product-info span { font-size: 11px; color: #888; }
-        
-        .price-tags-list { text-align: right; margin-right: 15px; cursor: pointer; }
-        .list-sell-price { font-size: 16px; font-weight: bold; color: var(--success-color); }
-        .list-buy-price { font-size: 12px; color: #888; }
-
-        .item-actions { display: flex; flex-direction: column; gap: 5px; }
-        .edit-icon-btn { color: var(--primary-color); border: none; background: #e7f0fe; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
-        .delete-icon-btn { color: var(--danger-color); border: none; background: #fee2e2; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
-
+        /* Scanner Styles */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9);
             display: none; justify-content: center; align-items: center; z-index: 5000;
         }
 
-        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 350px; text-align: center; }
-        #reader { width: 100%; border-radius: 10px; overflow: hidden; margin-top: 10px; }
+        .modal-content { 
+            background: white; 
+            padding: 20px; 
+            border-radius: var(--radius-lg); 
+            width: 90%; 
+            max-width: 400px; 
+            text-align: center; 
+        }
+
+        #reader { width: 100%; border-radius: 16px; overflow: hidden; border: 2px solid var(--primary); }
+
+        .close-btn-alt {
+            margin-top: 20px;
+            padding: 14px;
+            width: 100%;
+            background: #f3f4f6;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-<!-- Floating Scan Button -->
-<button class="main-scan-btn" onclick="openPriceScanner()" title="দাম দেখুন">🔍</button>
+<!-- Floating Action Button -->
+<button class="main-scan-btn" onclick="openPriceScanner()">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="8" y1="12" x2="16" y2="12"></line><line x1="12" y1="8" x2="12" y2="16"></line></svg>
+</button>
 
 <div class="container">
     <div class="header">
-        <h2>দাম ও কেনা দাম (Checker)</h2>
+        <h2>Smart Checker</h2>
     </div>
 
-    <!-- Quick Entry Form -->
-    <div class="form-card" id="formArea">
-        <p id="formTitle" style="font-size:13px; color:#1a73e8; margin-bottom:12px; font-weight:bold; border-bottom: 1px solid #ddd; padding-bottom: 5px;">নতুন পণ্য যোগ করুন</p>
+    <!-- Main Form -->
+    <div class="glass-card">
+        <div class="section-title">পণ্য যোগ করুন</div>
         
         <div class="form-group">
-            <label>বারকোড (স্ক্যান বা টাইপ)</label>
-            <input type="text" id="pBarcode" placeholder="কোড লিখুন...">
+            <label>বারকোড নম্বর</label>
+            <input type="text" id="pBarcode" placeholder="কোড স্ক্যান বা লিখুন">
         </div>
         
         <div class="form-group">
             <label>পণ্যের নাম</label>
-            <input type="text" id="pName" placeholder="নাম লিখুন...">
+            <input type="text" id="pName" placeholder="যেমন: আটা ৫ কেজি">
         </div>
 
-        <!-- Buying Calculator Section -->
-        <div class="calculator-box">
-            <p style="font-size: 11px; font-weight: bold; color: #1a73e8; margin-bottom: 8px;">ক্রয় ক্যালকুলেটর (অটো দাম বের করুন)</p>
-            <div style="display: flex; gap: 8px;">
-                <div class="form-group" style="flex: 1;">
-                    <label>মোট ক্রয় মূল্য (৳)</label>
-                    <input type="number" id="totalBuyCost" placeholder="যেমন: ১০০০">
-                </div>
-                <div class="form-group" style="flex: 1;">
-                    <label>মোট পরিমাণ (পিস)</label>
-                    <input type="number" id="totalBuyQty" placeholder="যেমন: ৫০">
-                </div>
+        <div class="calculator-row">
+            <div class="form-group" style="margin-bottom:0">
+                <label>মোট ক্রয় (৳)</label>
+                <input type="number" id="totalBuyCost" placeholder="১০০০">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>পরিমাণ (পিস)</label>
+                <input type="number" id="totalBuyQty" placeholder="১০">
             </div>
         </div>
 
-        <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1;">
-                <label>১টির কেনা দাম (৳)</label>
-                <input type="number" id="pBuyPrice" placeholder="0.00" style="background: #fff; font-weight: bold; color: var(--danger-color);">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+            <div class="form-group" style="margin-bottom:0">
+                <label>একক কেনা দাম</label>
+                <input type="number" id="pBuyPrice" placeholder="0.00" style="color: var(--danger); font-weight: bold;">
             </div>
-            <div class="form-group" style="flex: 1;">
-                <label>১টির বিক্রয় মূল্য (৳)</label>
-                <input type="number" id="pSellPrice" placeholder="0.00" style="font-weight: bold; color: var(--success-color);">
+            <div class="form-group" style="margin-bottom:0">
+                <label>একক বিক্রয় মূল্য</label>
+                <input type="number" id="pSellPrice" placeholder="0.00" style="color: var(--success); font-weight: bold;">
             </div>
         </div>
         
-        <button class="save-btn" id="addBtn">সেভ করুন</button>
-        <button id="cancelBtn" onclick="resetForm()">বাতিল করুন</button>
+        <button class="save-btn" id="addBtn">সেভ নিশ্চিত করুন</button>
     </div>
 
+    <!-- Search Section -->
     <div class="search-area">
-        <input type="text" id="searchBar" placeholder="নাম বা বারকোড দিয়ে খুঁজুন...">
+        <input type="text" id="searchBar" class="search-input" placeholder="🔍 নাম বা কোড দিয়ে খুঁজুন...">
     </div>
 
+    <!-- Product List Container -->
     <div id="productList"></div>
 </div>
 
-<!-- Price Result Modal -->
+<!-- Price Card Modal -->
 <div class="price-popup" id="priceResultModal">
     <div class="price-card">
-        <p id="resName" style="font-weight:600; color:#333; font-size: 20px;">পণ্যের নাম</p>
-        <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
-        <span style="font-size: 13px; color: #888;">বিক্রয় মূল্য (১ পিস)</span>
+        <div class="label-badge">বিক্রয় মূল্য</div>
+        <p id="resName" style="font-weight:700; color:var(--text-main); font-size: 22px; margin-bottom: 5px;">পণ্য</p>
         <h1 id="resPrice">৳ ০.০০</h1>
-        <div class="buy-price-text" id="resBuyPrice">কেনা দাম: ৳ ০.০০</div>
-        <p id="resBarcode" style="font-size:11px; color:#999; margin-top: 10px;"></p>
-        <button class="close-popup-btn" onclick="closePricePopup()">ঠিক আছে</button>
+        
+        <div class="buy-tag">কেনা: <span id="resBuyPrice">৳ ০.০০</span></div>
+        
+        <p id="resBarcode" style="font-size:12px; color:var(--text-muted); margin-top: 25px; font-family: 'Inter'; letter-spacing: 1px;"></p>
+        
+        <button class="save-btn" style="margin-top: 30px;" onclick="closePricePopup()">বন্ধ করুন</button>
     </div>
 </div>
 
-<!-- Scanner Modal -->
+<!-- Scanner View -->
 <div class="modal-overlay" id="scannerModal">
     <div class="modal-content">
-        <h4 id="scannerTitle">স্ক্যান করুন</h4>
+        <h3 style="margin-bottom: 15px; color: var(--primary);">বারকোড স্ক্যানার</h3>
         <div id="reader"></div>
-        <button onclick="closeScanner()" class="close-popup-btn" style="background:var(--danger-color); margin-top:15px;">বন্ধ করুন</button>
+        <button onclick="closeScanner()" class="close-btn-alt">ক্যামেরা বন্ধ করুন</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyDgFaTrHW7Grp_Q22p6KNcHZxaEujHsLsE",
         authDomain: "exchange-project-d4028.firebaseapp.com",
@@ -291,20 +405,16 @@
     const totalBuyQty = document.getElementById('totalBuyQty');
     const productListDiv = document.getElementById('productList');
     const addBtn = document.getElementById('addBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const formTitle = document.getElementById('formTitle');
     
     let allProducts = [];
     let html5QrCode;
-    let editingId = null;
 
-    // অটো কেনা দাম ক্যালকুলেশন
+    // কেনা দামের হিসাব
     function calculateUnitPrice() {
         const cost = parseFloat(totalBuyCost.value) || 0;
         const qty = parseFloat(totalBuyQty.value) || 0;
         if (cost > 0 && qty > 0) {
-            const unitPrice = cost / qty;
-            pBuyPrice.value = unitPrice.toFixed(2);
+            pBuyPrice.value = (cost / qty).toFixed(2);
         } else {
             pBuyPrice.value = "";
         }
@@ -313,12 +423,12 @@
     totalBuyCost.oninput = calculateUnitPrice;
     totalBuyQty.oninput = calculateUnitPrice;
 
-    // পপআপে দাম দেখানো
+    // দাম দেখানোর পপআপ
     window.showPriceResult = (product) => {
         document.getElementById('resName').innerText = product.name;
         document.getElementById('resPrice').innerText = `৳ ${product.sellPrice}`;
-        document.getElementById('resBuyPrice').innerText = `কেনা দাম: ৳ ${product.buyPrice || 0}`;
-        document.getElementById('resBarcode').innerText = `বারকোড: ${product.barcode || 'নেই'}`;
+        document.getElementById('resBuyPrice').innerText = `৳ ${product.buyPrice || 0}`;
+        document.getElementById('resBarcode').innerText = `SKU: ${product.barcode || 'N/A'}`;
         document.getElementById('priceResultModal').style.display = 'flex';
     };
 
@@ -326,162 +436,92 @@
         document.getElementById('priceResultModal').style.display = 'none';
     };
 
-    // এডিট ফাংশন
-    window.editProduct = (id) => {
-        const product = allProducts.find(p => p.id === id);
-        if (product) {
-            editingId = id;
-            pBarcode.value = product.barcode || "";
-            pName.value = product.name;
-            pBuyPrice.value = product.buyPrice || 0;
-            pSellPrice.value = product.sellPrice;
-            
-            // ক্যালকুলেটর ক্লিয়ার
-            totalBuyCost.value = "";
-            totalBuyQty.value = "";
-            
-            formTitle.innerText = "পণ্য আপডেট করুন";
-            addBtn.innerText = "আপডেট করুন";
-            cancelBtn.style.display = "block";
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    };
-
-    // ডিলিট ফাংশন
-    window.deleteProduct = (id) => {
-        if (confirm("আপনি কি নিশ্চিতভাবে এই পণ্যটি মুছে ফেলতে চান?")) {
-            const itemRef = ref(db, `bakala_products/${id}`);
-            remove(itemRef).then(() => {
-                alert("পণ্যটি মুছে ফেলা হয়েছে।");
-            }).catch(err => alert("ত্রুটি: " + err.message));
-        }
-    };
-
-    // রিসেট ফর্ম
-    window.resetForm = () => {
-        editingId = null;
-        pBarcode.value = "";
-        pName.value = "";
-        pBuyPrice.value = "";
-        pSellPrice.value = "";
-        totalBuyCost.value = "";
-        totalBuyQty.value = "";
-        formTitle.innerText = "নতুন পণ্য যোগ করুন";
-        addBtn.innerText = "সেভ করুন";
-        cancelBtn.style.display = "none";
-    };
-
-    // স্ক্যানার
+    // স্ক্যানার কন্ট্রোল
     window.openPriceScanner = () => {
         document.getElementById('scannerModal').style.display = 'flex';
         html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, (text) => {
+        html5QrCode.start({ facingMode: "environment" }, { fps: 25, qrbox: {width: 250, height: 150} }, (text) => {
             closeScanner();
             const match = allProducts.find(p => p.barcode === text);
             if (match) {
                 showPriceResult(match);
             } else {
-                alert("পণ্যটি পাওয়া যায়নি!");
                 pBarcode.value = text;
+                // ভিব্রেট ইফেক্ট (যদি সাপোর্ট করে)
+                if (navigator.vibrate) navigator.vibrate(100);
             }
-        }).catch(err => {
-            console.error(err);
-        });
+        }).catch(err => console.error(err));
     };
 
     window.closeScanner = () => {
         if (html5QrCode) {
-            html5QrCode.stop().then(() => {
+            html5QrCode.stop().finally(() => {
                 document.getElementById('scannerModal').style.display = 'none';
                 html5QrCode = null;
-            }).catch(() => {
-                document.getElementById('scannerModal').style.display = 'none';
             });
         } else {
             document.getElementById('scannerModal').style.display = 'none';
         }
     };
 
-    // পণ্য সেভ বা আপডেট করা
+    // ডাটা সেভ
     addBtn.onclick = async () => {
         const name = pName.value.trim();
         const buy = parseFloat(pBuyPrice.value) || 0;
         const sell = parseFloat(pSellPrice.value) || 0;
         const barcode = pBarcode.value.trim();
         
-        if (!name || sell <= 0) {
-            alert("পণ্যের নাম এবং বিক্রয় মূল্য সঠিক দিন।");
-            return;
-        }
-
-        const productData = { 
-            name, 
-            buyPrice: buy, 
-            sellPrice: sell, 
-            barcode, 
-            timestamp: Date.now() 
-        };
+        if (!name || sell <= 0) return;
 
         try {
-            if (editingId) {
-                // আপডেট লজিক
-                const itemRef = ref(db, `bakala_products/${editingId}`);
-                await update(itemRef, productData);
-                alert("পণ্য সফলভাবে আপডেট হয়েছে।");
-            } else {
-                // নতুন যোগ লজিক
-                await push(productsRef, productData);
-                alert("সফলভাবে সেভ হয়েছে।");
-            }
-            resetForm();
-        } catch (e) { alert("ত্রুটি হয়েছে!"); }
+            await push(productsRef, { 
+                name, buyPrice: buy, sellPrice: sell, barcode, timestamp: Date.now() 
+            });
+            pName.value = ""; pBuyPrice.value = ""; pSellPrice.value = ""; pBarcode.value = "";
+            totalBuyCost.value = ""; totalBuyQty.value = "";
+        } catch (e) { console.error("Error saving"); }
     };
 
-    // ডাটা রিড করা
+    // রিয়েলটাইম ডাটা লিস্ট
     onValue(productsRef, (snap) => {
         const data = snap.val();
         allProducts = [];
         if (data) {
-            Object.keys(data).forEach(k => {
-                allProducts.push({ id: k, ...data[k] });
-            });
+            Object.keys(data).forEach(k => allProducts.push({ id: k, ...data[k] }));
             renderProducts(allProducts);
         } else {
-            productListDiv.innerHTML = '<p style="text-align:center;color:#888;">কোন পণ্য নেই।</p>';
+            productListDiv.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">কোন পণ্য পাওয়া যায়নি।</div>';
         }
     });
 
     function renderProducts(products) {
         productListDiv.innerHTML = "";
+        // নতুনগুলো আগে দেখাবে
         products.sort((a,b) => b.timestamp - a.timestamp);
         
         products.forEach(p => {
             const div = document.createElement('div');
             div.className = 'product-item';
+            div.onclick = () => showPriceResult(p);
             div.innerHTML = `
-                <div class="product-info" onclick='showPriceResult(${JSON.stringify(p).replace(/'/g, "&apos;")})'>
+                <div class="product-info">
                     <h4>${p.name}</h4>
-                    <span>BC: ${p.barcode || '---'}</span>
+                    <span># ${p.barcode || '---'}</span>
                 </div>
-                <div class="price-tags-list" onclick='showPriceResult(${JSON.stringify(p).replace(/'/g, "&apos;")})'>
-                    <div class="list-sell-price">৳ ${p.sellPrice}</div>
-                    <div class="list-buy-price">কেনা: ৳ ${p.buyPrice || 0}</div>
-                </div>
-                <div class="item-actions">
-                    <button class="edit-icon-btn" onclick="editProduct('${p.id}')">✎</button>
-                    <button class="delete-icon-btn" onclick="deleteProduct('${p.id}')">✕</button>
+                <div class="price-tags-list">
+                    <div class="list-sell-price">৳${p.sellPrice}</div>
+                    <div class="list-buy-price">ক্রয়: ৳${p.buyPrice || 0}</div>
                 </div>
             `;
             productListDiv.appendChild(div);
         });
     }
 
-    // সার্চ
+    // সার্চ ফাংশনালিটি
     document.getElementById('searchBar').oninput = (e) => {
-        const t = e.target.value.toLowerCase();
+        const term = e.target.value.toLowerCase();
         const filtered = allProducts.filter(p => 
-            p.name.toLowerCase().includes(t) || (p.barcode && p.barcode.includes(t))
+            p.name.toLowerCase().includes(term) || (p.barcode && p.barcode.includes(term))
         );
         renderProducts(filtered);
     };
