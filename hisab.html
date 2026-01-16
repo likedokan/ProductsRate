@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>দোকানের হিসাব - আল্টিমেট</title>
     <script src="https://cdn.tailwindcss.com"> </script>
-    <!-- html2canvas লাইব্রেরি ইমেজ ডাউনলোডের জন্য -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -72,7 +71,6 @@
             animation: modalSlideUp 0.3s ease-out forwards;
         }
         
-        /* ইমেজ ক্যাপচারের সময় কিছু এলিমেন্ট লুকানোর জন্য */
         .hide-on-capture {
             display: none !important;
         }
@@ -91,8 +89,7 @@
                 </div>
             </div>
             <div class="flex gap-2">
-                <!-- ড্যাশবোর্ড ডাউনলোড বাটন -->
-                <button id="btnDownloadDashboard" class="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-slate-700 shadow-sm transition-all active-scale">
+                <button id="btnDownloadDashboard" title="ছবি ডাউনলোড করুন" class="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-slate-700 shadow-sm transition-all active-scale">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                 </button>
                 <button id="btnTheme" class="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800 border dark:border-slate-700 shadow-sm transition-all active-scale">
@@ -151,7 +148,7 @@
                 <!-- Opening -->
                 <div id="cardOpening" class="bg-white dark:bg-slate-800 p-4 rounded-3xl flex justify-between items-center cursor-pointer border dark:border-slate-700 active-scale card-shadow">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-2xl flex items-center justify-center text-blue-600 text-xl">💸</div>
+                        <div class="emoji-box w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-2xl flex items-center justify-center text-blue-600 text-xl">💸</div>
                         <div>
                             <h4 class="font-bold text-base leading-none mb-1">ওপেনিং ক্যাশ</h4>
                             <p class="text-[10px] opacity-40 font-medium uppercase">সকালের ব্যালেন্স</p>
@@ -163,7 +160,7 @@
                 <!-- Expense -->
                 <div id="cardExpense" class="bg-white dark:bg-slate-800 p-4 rounded-3xl flex justify-between items-center cursor-pointer border-l-4 border-l-orange-500 active-scale card-shadow">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/40 rounded-2xl flex items-center justify-center text-orange-600 text-xl">🍱</div>
+                        <div class="emoji-box w-12 h-12 bg-orange-100 dark:bg-orange-900/40 rounded-2xl flex items-center justify-center text-orange-600 text-xl">🍱</div>
                         <div>
                             <h4 class="font-bold text-base leading-none mb-1">মনদুভ খরচ</h4>
                             <p class="text-[10px] opacity-40 font-medium uppercase">আজকের ব্যয়</p>
@@ -175,7 +172,7 @@
                 <!-- Due -->
                 <div id="cardDue" class="bg-white dark:bg-slate-800 p-4 rounded-3xl flex justify-between items-center cursor-pointer border-l-4 border-l-rose-500 active-scale card-shadow">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-rose-100 dark:bg-rose-900/40 rounded-2xl flex items-center justify-center text-rose-600 text-xl">📝</div>
+                        <div class="emoji-box w-12 h-12 bg-rose-100 dark:bg-rose-900/40 rounded-2xl flex items-center justify-center text-rose-600 text-xl">📝</div>
                         <div>
                             <h4 class="font-bold text-base leading-none mb-1">বাকি বিক্রি</h4>
                             <p class="text-[10px] opacity-40 font-medium uppercase">কাস্টমার বাকি</p>
@@ -187,7 +184,7 @@
                 <!-- Bkash -->
                 <div id="cardBkash" class="bg-white dark:bg-slate-800 p-4 rounded-3xl flex justify-between items-center cursor-pointer border-l-4 border-l-purple-500 active-scale card-shadow">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center text-purple-600 text-xl">📱</div>
+                        <div class="emoji-box w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center text-purple-600 text-xl">📱</div>
                         <div>
                             <h4 class="font-bold text-base leading-none mb-1">বিকাশ-নগদ</h4>
                             <p id="bkashDetail" class="text-[10px] opacity-40 font-medium uppercase italic leading-tight">পাঠানো: ০ | আনা: ০</p>
@@ -199,7 +196,7 @@
                 <!-- Closing -->
                 <div id="cardClosing" class="bg-white dark:bg-slate-800 p-4 rounded-3xl flex justify-between items-center cursor-pointer border-l-4 border-l-emerald-500 active-scale card-shadow">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center text-emerald-600 text-xl">🏦</div>
+                        <div class="emoji-box w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center text-emerald-600 text-xl">🏦</div>
                         <div>
                             <h4 class="font-bold text-base leading-none mb-1">ক্লোজিং ক্যাশ</h4>
                             <p class="text-[10px] opacity-40 font-medium uppercase">দিন শেষে গাল্লা</p>
@@ -255,7 +252,6 @@
                 </div>
                 <div id="reportContent" class="space-y-3"></div>
             </div>
-            <!-- রিপোর্ট ডাউনলোড বাটন -->
             <button id="btnDownloadReport" class="w-full mt-4 py-4 bg-indigo-600 text-white font-bold rounded-2xl active-scale shadow-lg shadow-indigo-100 dark:shadow-none flex items-center justify-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                 রিপোর্ট ডাউনলোড করুন
@@ -263,7 +259,7 @@
         </div>
     </div>
 
-    <!-- টোস্ট নোটিফিকেশন মেসেজ বক্স -->
+    <!-- Toast -->
     <div id="toast" class="fixed bottom-28 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-800 text-white text-sm rounded-full opacity-0 pointer-events-none transition-all duration-300 z-[100]"></div>
 
     <script type="module">
@@ -419,6 +415,47 @@
             refreshData();
         };
 
+        const downloadImage = (elementId, fileName) => {
+            const element = document.getElementById(elementId);
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerText = "...";
+            
+            const filters = document.getElementById('filterSection');
+            if(elementId === 'captureArea' && filters) filters.classList.add('hide-on-capture');
+
+            html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: document.body.classList.contains('dark-theme') ? '#0b0f1a' : '#f3f4f6',
+                onclone: (clonedDoc) => {
+                    // ফ্লেক্সবক্স মিসঅ্যালাইনমেন্ট ঠিক করার জন্য ইমোজি বক্সগুলোর স্টাইল ফোর্স করা
+                    const boxes = clonedDoc.querySelectorAll('.emoji-box');
+                    boxes.forEach(box => {
+                        box.style.display = 'block';
+                        box.style.textAlign = 'center';
+                        box.style.lineHeight = '48px'; // w-12 h-12 এর সমতুল্য
+                    });
+                }
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${fileName}_${getDateKey()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                if(elementId === 'captureArea' && filters) filters.classList.remove('hide-on-capture');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                showToast("ছবি সেভ হয়েছে!");
+            }).catch(err => {
+                console.error(err);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            });
+        };
+
         document.getElementById('boxDay').onclick = () => showPicker('day');
         document.getElementById('boxMonth').onclick = () => showPicker('month');
         document.getElementById('boxYear').onclick = () => showPicker('year');
@@ -454,48 +491,14 @@
             document.getElementById('reportRange').innerText = `${toBangla(dates[dates.length-1])} থেকে ${toBangla(dates[0])}`;
         };
 
-        // ফটো ডাউনলোড ফাংশন
-        const downloadImage = (elementId, fileName) => {
-            const element = document.getElementById(elementId);
-            const btn = event.currentTarget;
-            btn.disabled = true;
-            btn.innerHTML = "প্রসেসিং...";
-            
-            // ক্যাপচারের সময় অপ্রয়োজনীয় এলিমেন্ট লুকানো
-            const filters = document.getElementById('filterSection');
-            if(elementId === 'captureArea' && filters) filters.classList.add('hide-on-capture');
-
-            html2canvas(element, {
-                scale: 2, // ভালো কোয়ালিটির জন্য
-                useCORS: true,
-                backgroundColor: document.body.classList.contains('dark-theme') ? '#0b0f1a' : '#f3f4f6'
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `${fileName}_${new Date().getTime()}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                // আগের অবস্থায় ফেরত আনা
-                if(elementId === 'captureArea' && filters) filters.classList.remove('hide-on-capture');
-                btn.disabled = false;
-                btn.innerHTML = elementId === 'reportModal' ? "রিপোর্ট ডাউনলোড করুন" : `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>`;
-                showToast("ফটো সেভ হয়েছে!");
-            }).catch(err => {
-                console.error(err);
-                showToast("ডাউনলোড ব্যর্থ হয়েছে");
-                btn.disabled = false;
-            });
-        };
-
         document.getElementById('boxReport').onclick = () => { toggleModal('reportModal', true); generateReport('weekly'); };
         document.getElementById('btnWeekly').onclick = () => generateReport('weekly');
         document.getElementById('btnMonthly').onclick = () => generateReport('monthly');
         document.getElementById('closeReport').onclick = () => toggleModal('reportModal', false);
         document.getElementById('btnTheme').onclick = () => { document.body.classList.toggle('dark-theme'); document.getElementById('sunIcon').classList.toggle('hidden'); document.getElementById('moonIcon').classList.toggle('hidden'); };
 
-        // ইভেন্ট লিসেনার ফর ডাউনলোড
-        document.getElementById('btnDownloadDashboard').onclick = () => downloadImage('captureArea', 'Daily_Dashboard');
-        document.getElementById('btnDownloadReport').onclick = () => downloadImage('reportDisplayArea', 'Report_Summary');
+        document.getElementById('btnDownloadDashboard').onclick = () => downloadImage('captureArea', 'Daily_Summary');
+        document.getElementById('btnDownloadReport').onclick = () => downloadImage('reportDisplayArea', 'Full_Report');
 
         updateUI();
     </script>
