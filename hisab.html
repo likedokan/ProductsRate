@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>দোকানের হিসাব - আল্টিমেট</title>
     <script src="https://cdn.tailwindcss.com"> </script>
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- html2canvas লাইব্রেরি ইমেজ ডাউনলোডের জন্য -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
@@ -70,16 +71,10 @@
         .animate-modal {
             animation: modalSlideUp 0.3s ease-out forwards;
         }
-
-        /* Export Fix: স্ক্রিনশট রেন্ডারিং এর সময় পজিশন ঠিক রাখতে */
-        .capturing {
-            width: 380px !important;
-            margin: 0 !important;
-            padding: 20px !important;
-            position: absolute;
-            left: -9999px;
-            top: 0;
-            background-color: var(--bg-light);
+        
+        /* ইমেজ ক্যাপচারের সময় কিছু এলিমেন্ট লুকানোর জন্য */
+        .hide-on-capture {
+            display: none !important;
         }
     </style>
 </head>
@@ -95,17 +90,23 @@
                     <span class="text-[10px] opacity-60 font-semibold uppercase tracking-wider">Premium Dashboard</span>
                 </div>
             </div>
-            <button id="btnTheme" class="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800 border dark:border-slate-700 shadow-sm transition-all active-scale">
-                <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l.707-.707M6.343 6.343l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-            </button>
+            <div class="flex gap-2">
+                <!-- ড্যাশবোর্ড ডাউনলোড বাটন -->
+                <button id="btnDownloadDashboard" class="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-slate-700 shadow-sm transition-all active-scale">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                </button>
+                <button id="btnTheme" class="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800 border dark:border-slate-700 shadow-sm transition-all active-scale">
+                    <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                    <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l.707-.707M6.343 6.343l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+                </button>
+            </div>
         </div>
     </nav>
 
-    <main class="max-w-md mx-auto px-4">
+    <main class="max-w-md mx-auto px-4" id="captureArea">
         
-        <!-- Date Filters (Modern Pills) -->
-        <div class="flex items-center gap-2 mb-6 overflow-x-auto no-scrollbar py-1" data-html2canvas-ignore="true">
+        <!-- Date Filters -->
+        <div class="flex items-center gap-2 mb-6 overflow-x-auto no-scrollbar py-1" id="filterSection">
             <div id="boxDay" class="flex-shrink-0 px-4 py-2 bg-white dark:bg-slate-800 rounded-2xl border dark:border-slate-700 flex flex-col items-center cursor-pointer active-scale shadow-sm">
                 <span class="text-[9px] opacity-50 font-bold">দিন</span>
                 <span id="valDay" class="font-bold text-indigo-600">--</span>
@@ -123,8 +124,7 @@
             <button id="boxReport" class="flex-shrink-0 px-5 py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-bold rounded-2xl border border-emerald-100 dark:border-emerald-800 active-scale">রিপোর্ট</button>
         </div>
 
-        <!-- Capture Area Wrapper -->
-        <div id="captureArea" class="space-y-4">
+        <div id="dashboardArea" class="space-y-4">
             <!-- Balance Card -->
             <div class="summary-gradient rounded-[32px] p-8 text-white shadow-xl relative overflow-hidden">
                 <div class="absolute -top-10 -right-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl"></div>
@@ -209,10 +209,6 @@
                 </div>
             </div>
         </div>
-
-        <button id="btnExport" class="w-full mt-6 py-5 bg-slate-900 dark:bg-indigo-600 text-white font-bold rounded-3xl shadow-xl flex items-center justify-center gap-2 active-scale transition-all" data-html2canvas-ignore="true">
-            📸 স্ক্রিনশট সেভ করুন
-        </button>
     </main>
 
     <!-- Entry Modal -->
@@ -248,20 +244,27 @@
                 <h3 class="text-xl font-bold">রিপোর্ট সামারি</h3>
                 <button id="closeReport" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-full">✕</button>
             </div>
-            <div class="flex gap-2 mb-6">
+            <div class="flex gap-2 mb-6" id="reportActionButtons">
                 <button id="btnWeekly" class="flex-1 py-4 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-2xl active-scale border border-indigo-100 dark:border-indigo-800">সাপ্তাহিক</button>
                 <button id="btnMonthly" class="flex-1 py-4 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-bold rounded-2xl active-scale border border-emerald-100 dark:border-emerald-800">মাসিক</button>
             </div>
-            <div id="reportCaptureArea" class="bg-slate-50 dark:bg-slate-950 p-6 rounded-[24px] border border-slate-200 dark:border-slate-800">
+            <div id="reportDisplayArea" class="bg-slate-50 dark:bg-slate-950 p-6 rounded-[24px] border border-slate-200 dark:border-slate-800">
                 <div class="text-center mb-4">
                     <h4 class="text-lg font-bold" id="reportTitle">রিপোর্ট</h4>
                     <p class="text-[10px] opacity-40 font-bold tracking-widest uppercase" id="reportRange">...</p>
                 </div>
                 <div id="reportContent" class="space-y-3"></div>
             </div>
-            <button id="btnDownloadReport" class="w-full mt-6 py-5 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg active-scale">ফটো ডাউনলোড করুন</button>
+            <!-- রিপোর্ট ডাউনলোড বাটন -->
+            <button id="btnDownloadReport" class="w-full mt-4 py-4 bg-indigo-600 text-white font-bold rounded-2xl active-scale shadow-lg shadow-indigo-100 dark:shadow-none flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                রিপোর্ট ডাউনলোড করুন
+            </button>
         </div>
     </div>
+
+    <!-- টোস্ট নোটিফিকেশন মেসেজ বক্স -->
+    <div id="toast" class="fixed bottom-28 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-800 text-white text-sm rounded-full opacity-0 pointer-events-none transition-all duration-300 z-[100]"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -283,6 +286,13 @@
         let now = new Date();
         let currentS = { d: now.getDate(), m: now.getMonth(), y: now.getFullYear() };
         let activeListeners = [];
+
+        const showToast = (msg) => {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.remove('opacity-0');
+            setTimeout(() => t.classList.add('opacity-0'), 2000);
+        };
 
         const toggleModal = (id, show) => {
             const el = document.getElementById(id);
@@ -343,7 +353,7 @@
                 modalTitle.innerText = "বিকাশ-নগদ হিসাব";
                 inputs.innerHTML = `
                     <div class="grid grid-cols-2 gap-2 mb-2">
-                        <select id="mSub1" class="p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold"><option value="bKash">বিকাশ</option><option value="Nagad">নগদ</option></select>
+                        <select id="mSub1" class="p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold"><option value="বিকাশ">বিকাশ</option><option value="নগদ">নগদ</option></select>
                         <select id="mSub2" class="p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold"><option value="টাকা পাঠানো">টাকা পাঠানো (+)</option><option value="রিয়াল আনা">রিয়াল আনা (-)</option></select>
                     </div>
                     <input type="number" id="mAmount" placeholder="টাকার পরিমাণ লিখুন" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold text-lg mb-2">
@@ -384,7 +394,7 @@
                         if(isBkash) { if(v.type === "টাকা পাঠানো") bin += v.amount; else bout += v.amount; } else total += v.amount;
                         list.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border dark:border-slate-700">
                                 <div class="flex flex-col"><span class="font-bold text-sm">${isBkash ? v.method : v.name}</span><span class="text-[9px] font-bold uppercase ${v.type==='টাকা পাঠানো' ? 'text-indigo-500' : (v.type ? 'text-rose-500' : 'text-slate-400')}">${v.type || 'সাধারণ এন্ট্রি'}</span></div>
-                                <div class="flex items-center gap-3"><strong class="text-indigo-600 dark:text-indigo-400">৳ ${v.amount}</strong><button onclick="delEntry('${path}/${k}')" class="w-8 h-8 flex items-center justify-center bg-rose-50 dark:bg-rose-900/30 text-rose-500 rounded-xl">✕</button></div></div>`;
+                                <div class="flex items-center gap-3"><strong class="text-indigo-600 dark:text-indigo-400">৳ ${v.amount}</strong><button onclick="window.delEntry('${path}/${k}')" class="w-8 h-8 flex items-center justify-center bg-rose-50 dark:bg-rose-900/30 text-rose-500 rounded-xl">✕</button></div></div>`;
                     });
                 }
                 if(type === 'bkash') { 
@@ -422,55 +432,6 @@
         document.getElementById('cardOpening').onclick = () => { const v = prompt('ওপেনিং ক্যাশ:'); if(v) set(ref(db, `daily_records/${getDateKey()}/cash/opening`), parseFloat(v)); };
         document.getElementById('cardClosing').onclick = () => { const v = prompt('ক্লোজিং ক্যাশ:'); if(v) set(ref(db, `daily_records/${getDateKey()}/cash/closing`), parseFloat(v)); };
 
-        // Optimized Capture Function
-        async function captureAndSave(elementId, fileName) {
-            const el = document.getElementById(elementId);
-            const originalStyles = el.getAttribute('style') || "";
-            
-            // ক্যাপচার করার জন্য এলিমেন্টকে স্ট্যাটিক উইডথ দেওয়া যাতে সরে না যায়
-            el.classList.add('capturing');
-            
-            try {
-                // ফন্ট লোড হওয়ার জন্য সামান্য বিরতি
-                await document.fonts.ready;
-                
-                const canvas = await html2canvas(el, {
-                    backgroundColor: document.body.classList.contains('dark-theme') ? '#0b0f1a' : '#f3f4f6',
-                    scale: 3, 
-                    useCORS: true,
-                    logging: false,
-                    allowTaint: true,
-                    scrollX: 0,
-                    scrollY: 0,
-                    windowWidth: 400, // ভার্চুয়াল উইডথ ফিক্সড করা হয়েছে
-                    onclone: (clonedDoc) => {
-                        const clonedEl = clonedDoc.getElementById(elementId);
-                        clonedEl.style.position = "static";
-                        clonedEl.style.left = "0";
-                        clonedEl.style.width = "380px";
-                        clonedEl.style.margin = "0";
-                        clonedEl.style.padding = "20px";
-                        clonedEl.classList.remove('capturing');
-                    }
-                });
-
-                const link = document.createElement('a');
-                link.download = fileName;
-                link.href = canvas.toDataURL("image/png", 1.0);
-                link.click();
-            } catch (err) {
-                console.error("Capture failed:", err);
-            } finally {
-                // স্টাইল রিসেট করা
-                el.classList.remove('capturing');
-                el.setAttribute('style', originalStyles);
-            }
-        }
-
-        document.getElementById('btnExport').onclick = () => captureAndSave('captureArea', `Daily_Report_${getDateKey()}.png`);
-        document.getElementById('btnDownloadReport').onclick = () => captureAndSave('reportCaptureArea', `Summary_Report.png`);
-
-        // Report & Picker logic
         const showPicker = (t) => {
             const grid = document.getElementById('pickerGrid'); grid.innerHTML = "";
             if(t==='day') for(let i=1;i<=31;i++) { const b=document.createElement('div'); b.className="p-3 text-center rounded-xl bg-slate-50 dark:bg-slate-800 font-bold cursor-pointer"; b.innerText=toBangla(i); b.onclick=()=>{currentS.d=i;updateUI();toggleModal('pickerModal',false)}; grid.appendChild(b); }
@@ -493,11 +454,48 @@
             document.getElementById('reportRange').innerText = `${toBangla(dates[dates.length-1])} থেকে ${toBangla(dates[0])}`;
         };
 
+        // ফটো ডাউনলোড ফাংশন
+        const downloadImage = (elementId, fileName) => {
+            const element = document.getElementById(elementId);
+            const btn = event.currentTarget;
+            btn.disabled = true;
+            btn.innerHTML = "প্রসেসিং...";
+            
+            // ক্যাপচারের সময় অপ্রয়োজনীয় এলিমেন্ট লুকানো
+            const filters = document.getElementById('filterSection');
+            if(elementId === 'captureArea' && filters) filters.classList.add('hide-on-capture');
+
+            html2canvas(element, {
+                scale: 2, // ভালো কোয়ালিটির জন্য
+                useCORS: true,
+                backgroundColor: document.body.classList.contains('dark-theme') ? '#0b0f1a' : '#f3f4f6'
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${fileName}_${new Date().getTime()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                // আগের অবস্থায় ফেরত আনা
+                if(elementId === 'captureArea' && filters) filters.classList.remove('hide-on-capture');
+                btn.disabled = false;
+                btn.innerHTML = elementId === 'reportModal' ? "রিপোর্ট ডাউনলোড করুন" : `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>`;
+                showToast("ফটো সেভ হয়েছে!");
+            }).catch(err => {
+                console.error(err);
+                showToast("ডাউনলোড ব্যর্থ হয়েছে");
+                btn.disabled = false;
+            });
+        };
+
         document.getElementById('boxReport').onclick = () => { toggleModal('reportModal', true); generateReport('weekly'); };
         document.getElementById('btnWeekly').onclick = () => generateReport('weekly');
         document.getElementById('btnMonthly').onclick = () => generateReport('monthly');
         document.getElementById('closeReport').onclick = () => toggleModal('reportModal', false);
         document.getElementById('btnTheme').onclick = () => { document.body.classList.toggle('dark-theme'); document.getElementById('sunIcon').classList.toggle('hidden'); document.getElementById('moonIcon').classList.toggle('hidden'); };
+
+        // ইভেন্ট লিসেনার ফর ডাউনলোড
+        document.getElementById('btnDownloadDashboard').onclick = () => downloadImage('captureArea', 'Daily_Dashboard');
+        document.getElementById('btnDownloadReport').onclick = () => downloadImage('reportDisplayArea', 'Report_Summary');
 
         updateUI();
     </script>
