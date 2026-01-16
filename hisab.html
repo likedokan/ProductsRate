@@ -70,6 +70,17 @@
         .animate-modal {
             animation: modalSlideUp 0.3s ease-out forwards;
         }
+
+        /* Export Fix: স্ক্রিনশট রেন্ডারিং এর সময় পজিশন ঠিক রাখতে */
+        .capturing {
+            width: 380px !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            background-color: var(--bg-light);
+        }
     </style>
 </head>
 <body class="min-h-screen pb-24">
@@ -112,6 +123,7 @@
             <button id="boxReport" class="flex-shrink-0 px-5 py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-bold rounded-2xl border border-emerald-100 dark:border-emerald-800 active-scale">রিপোর্ট</button>
         </div>
 
+        <!-- Capture Area Wrapper -->
         <div id="captureArea" class="space-y-4">
             <!-- Balance Card -->
             <div class="summary-gradient rounded-[32px] p-8 text-white shadow-xl relative overflow-hidden">
@@ -203,7 +215,7 @@
         </button>
     </main>
 
-    <!-- Entry Modal (Advanced Slide-up) -->
+    <!-- Entry Modal -->
     <div id="entryModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
         <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-t-[40px] p-6 shadow-2xl animate-modal max-h-[90vh] flex flex-col">
             <div class="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-6"></div>
@@ -211,13 +223,8 @@
                 <h3 class="text-xl font-bold" id="modalTitle">টাইটেল</h3>
                 <button id="closeEntryModal" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-full">✕</button>
             </div>
-            
             <div id="modalInputs" class="mb-4"></div>
-            
-            <div id="modalList" class="flex-1 overflow-y-auto custom-scroll space-y-2 mb-4 px-1">
-                <!-- Data List -->
-            </div>
-            
+            <div id="modalList" class="flex-1 overflow-y-auto custom-scroll space-y-2 mb-4 px-1"></div>
             <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-3xl flex justify-between items-center border dark:border-slate-800">
                 <span class="text-xs font-bold opacity-50 uppercase tracking-widest">মোট পরিমাণ</span>
                 <strong id="modalTotalDisp" class="text-2xl font-black text-indigo-600">৳ ০</strong>
@@ -260,7 +267,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getDatabase, ref, push, onValue, set, remove, off, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        // Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDgFaTrHW7Grp_Q22p6KNcHZxaEujHsLsE",
             databaseURL: "https://exchange-project-d4028-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -278,7 +284,6 @@
         let currentS = { d: now.getDate(), m: now.getMonth(), y: now.getFullYear() };
         let activeListeners = [];
 
-        // UI Core Functions
         const toggleModal = (id, show) => {
             const el = document.getElementById(id);
             if (show) {
@@ -327,7 +332,6 @@
             activeListeners.push({ ref: cashRef });
         };
 
-        // Entry Modal Builder
         const openDetailModal = (type) => {
             const dateKey = getDateKey();
             const modalTitle = document.getElementById('modalTitle');
@@ -378,19 +382,9 @@
                     Object.entries(snap.val()).reverse().forEach(([k, v]) => {
                         const isBkash = type === 'bkash';
                         if(isBkash) { if(v.type === "টাকা পাঠানো") bin += v.amount; else bout += v.amount; } else total += v.amount;
-                        list.innerHTML += `
-                            <div class="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border dark:border-slate-700">
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-sm">${isBkash ? v.method : v.name}</span>
-                                    <span class="text-[9px] font-bold uppercase ${v.type==='টাকা পাঠানো' ? 'text-indigo-500' : (v.type ? 'text-rose-500' : 'text-slate-400')}">
-                                        ${v.type || 'সাধারণ এন্ট্রি'}
-                                    </span>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <strong class="text-indigo-600 dark:text-indigo-400">৳ ${v.amount}</strong> 
-                                    <button onclick="delEntry('${path}/${k}')" class="w-8 h-8 flex items-center justify-center bg-rose-50 dark:bg-rose-900/30 text-rose-500 rounded-xl">✕</button>
-                                </div>
-                            </div>`;
+                        list.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border dark:border-slate-700">
+                                <div class="flex flex-col"><span class="font-bold text-sm">${isBkash ? v.method : v.name}</span><span class="text-[9px] font-bold uppercase ${v.type==='টাকা পাঠানো' ? 'text-indigo-500' : (v.type ? 'text-rose-500' : 'text-slate-400')}">${v.type || 'সাধারণ এন্ট্রি'}</span></div>
+                                <div class="flex items-center gap-3"><strong class="text-indigo-600 dark:text-indigo-400">৳ ${v.amount}</strong><button onclick="delEntry('${path}/${k}')" class="w-8 h-8 flex items-center justify-center bg-rose-50 dark:bg-rose-900/30 text-rose-500 rounded-xl">✕</button></div></div>`;
                     });
                 }
                 if(type === 'bkash') { 
@@ -405,24 +399,8 @@
             toggleModal('entryModal', true);
         };
 
-        window.delEntry = (fullPath) => confirm('আপনি কি এটি নিশ্চিতভাবে ডিলিট করতে চান?') ? remove(ref(db, fullPath)) : null;
+        window.delEntry = (p) => confirm('ডিলিট করতে চান?') ? remove(ref(db, p)) : null;
 
-        // Event Handlers
-        document.getElementById('cardBkash').onclick = () => openDetailModal('bkash');
-        document.getElementById('cardDue').onclick = () => openDetailModal('due');
-        document.getElementById('cardExpense').onclick = () => openDetailModal('expense');
-        document.getElementById('closeEntryModal').onclick = () => toggleModal('entryModal', false);
-
-        document.getElementById('cardOpening').onclick = () => { 
-            const v = prompt('ওপেনিং ক্যাশ লিখুন:'); 
-            if(v) set(ref(db, `daily_records/${getDateKey()}/cash/opening`), parseFloat(v)); 
-        };
-        document.getElementById('cardClosing').onclick = () => { 
-            const v = prompt('ক্লোজিং ক্যাশ লিখুন:'); 
-            if(v) set(ref(db, `daily_records/${getDateKey()}/cash/closing`), parseFloat(v)); 
-        };
-
-        // Date Picker Implementation
         const updateUI = () => {
             document.getElementById('valDay').innerText = toBangla(currentS.d);
             document.getElementById('valMonth').innerText = banglaMonths[currentS.m];
@@ -431,138 +409,96 @@
             refreshData();
         };
 
-        const showPicker = (type) => {
-            const grid = document.getElementById('pickerGrid'); grid.innerHTML = "";
-            document.getElementById('pickerTitle').innerText = type === 'day' ? "দিন সিলেক্ট করুন" : (type === 'month' ? "মাস সিলেক্ট করুন" : "বছর সিলেক্ট করুন");
-            
-            if(type === 'day') {
-                for(let i=1; i<=31; i++) {
-                    const b = document.createElement('div');
-                    b.className="p-3 text-center rounded-xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold cursor-pointer active-scale";
-                    b.innerText=toBangla(i);
-                    b.onclick = () => { currentS.d=i; updateUI(); toggleModal('pickerModal', false); };
-                    grid.appendChild(b);
-                }
-            } else if(type === 'month') {
-                banglaMonths.forEach((m, i) => {
-                    const b = document.createElement('div');
-                    b.className="col-span-2 p-3 text-center rounded-xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold cursor-pointer active-scale";
-                    b.innerText=m;
-                    b.onclick = () => { currentS.m=i; updateUI(); toggleModal('pickerModal', false); };
-                    grid.appendChild(b);
-                });
-            } else {
-                for(let i=2025; i<=2030; i++) {
-                    const b = document.createElement('div');
-                    b.className="col-span-2 p-3 text-center rounded-xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold cursor-pointer active-scale";
-                    b.innerText=toBangla(i);
-                    b.onclick = () => { currentS.y=i; updateUI(); toggleModal('pickerModal', false); };
-                    grid.appendChild(b);
-                }
-            }
-            toggleModal('pickerModal', true);
-        };
-
         document.getElementById('boxDay').onclick = () => showPicker('day');
         document.getElementById('boxMonth').onclick = () => showPicker('month');
         document.getElementById('boxYear').onclick = () => showPicker('year');
-        document.getElementById('boxToday').onclick = () => { 
-            let t = new Date(); 
-            currentS = { d: t.getDate(), m: t.getMonth(), y: t.getFullYear() }; 
-            updateUI(); 
-        };
+        document.getElementById('boxToday').onclick = () => { currentS = { d: now.getDate(), m: now.getMonth(), y: now.getFullYear() }; updateUI(); };
         document.getElementById('closePicker').onclick = () => toggleModal('pickerModal', false);
 
-        // Report System
+        document.getElementById('cardBkash').onclick = () => openDetailModal('bkash');
+        document.getElementById('cardDue').onclick = () => openDetailModal('due');
+        document.getElementById('cardExpense').onclick = () => openDetailModal('expense');
+        document.getElementById('closeEntryModal').onclick = () => toggleModal('entryModal', false);
+        document.getElementById('cardOpening').onclick = () => { const v = prompt('ওপেনিং ক্যাশ:'); if(v) set(ref(db, `daily_records/${getDateKey()}/cash/opening`), parseFloat(v)); };
+        document.getElementById('cardClosing').onclick = () => { const v = prompt('ক্লোজিং ক্যাশ:'); if(v) set(ref(db, `daily_records/${getDateKey()}/cash/closing`), parseFloat(v)); };
+
+        // Optimized Capture Function
+        async function captureAndSave(elementId, fileName) {
+            const el = document.getElementById(elementId);
+            const originalStyles = el.getAttribute('style') || "";
+            
+            // ক্যাপচার করার জন্য এলিমেন্টকে স্ট্যাটিক উইডথ দেওয়া যাতে সরে না যায়
+            el.classList.add('capturing');
+            
+            try {
+                // ফন্ট লোড হওয়ার জন্য সামান্য বিরতি
+                await document.fonts.ready;
+                
+                const canvas = await html2canvas(el, {
+                    backgroundColor: document.body.classList.contains('dark-theme') ? '#0b0f1a' : '#f3f4f6',
+                    scale: 3, 
+                    useCORS: true,
+                    logging: false,
+                    allowTaint: true,
+                    scrollX: 0,
+                    scrollY: 0,
+                    windowWidth: 400, // ভার্চুয়াল উইডথ ফিক্সড করা হয়েছে
+                    onclone: (clonedDoc) => {
+                        const clonedEl = clonedDoc.getElementById(elementId);
+                        clonedEl.style.position = "static";
+                        clonedEl.style.left = "0";
+                        clonedEl.style.width = "380px";
+                        clonedEl.style.margin = "0";
+                        clonedEl.style.padding = "20px";
+                        clonedEl.classList.remove('capturing');
+                    }
+                });
+
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = canvas.toDataURL("image/png", 1.0);
+                link.click();
+            } catch (err) {
+                console.error("Capture failed:", err);
+            } finally {
+                // স্টাইল রিসেট করা
+                el.classList.remove('capturing');
+                el.setAttribute('style', originalStyles);
+            }
+        }
+
+        document.getElementById('btnExport').onclick = () => captureAndSave('captureArea', `Daily_Report_${getDateKey()}.png`);
+        document.getElementById('btnDownloadReport').onclick = () => captureAndSave('reportCaptureArea', `Summary_Report.png`);
+
+        // Report & Picker logic
+        const showPicker = (t) => {
+            const grid = document.getElementById('pickerGrid'); grid.innerHTML = "";
+            if(t==='day') for(let i=1;i<=31;i++) { const b=document.createElement('div'); b.className="p-3 text-center rounded-xl bg-slate-50 dark:bg-slate-800 font-bold cursor-pointer"; b.innerText=toBangla(i); b.onclick=()=>{currentS.d=i;updateUI();toggleModal('pickerModal',false)}; grid.appendChild(b); }
+            else if(t==='month') banglaMonths.forEach((m,i)=>{ const b=document.createElement('div'); b.className="col-span-2 p-3 text-center rounded-xl bg-slate-50 dark:bg-slate-800 font-bold cursor-pointer"; b.innerText=m; b.onclick=()=>{currentS.m=i;updateUI();toggleModal('pickerModal',false)}; grid.appendChild(b); });
+            else for(let i=2025;i<=2030;i++) { const b=document.createElement('div'); b.className="col-span-2 p-3 text-center rounded-xl bg-slate-50 dark:bg-slate-800 font-bold cursor-pointer"; b.innerText=toBangla(i); b.onclick=()=>{currentS.y=i;updateUI();toggleModal('pickerModal',false)}; grid.appendChild(b); }
+            toggleModal('pickerModal', true);
+        };
+
         const generateReport = async (type) => {
             const content = document.getElementById('reportContent');
             content.innerHTML = `<div class="p-8 text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div></div>`;
             let dates = [];
-            
-            if(type === 'weekly') {
-                for(let i=0; i<7; i++) { 
-                    let d = new Date(currentS.y, currentS.m, currentS.d); 
-                    d.setDate(d.getDate() - i); 
-                    dates.push(getDateKey(d)); 
-                }
-                document.getElementById('reportTitle').innerText = "সাপ্তাহিক রিপোর্ট";
-            } else {
-                const last = new Date(currentS.y, currentS.m + 1, 0).getDate();
-                for(let i=1; i<=last; i++) dates.push(`${currentS.y}-${String(currentS.m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`);
-                document.getElementById('reportTitle').innerText = banglaMonths[currentS.m] + " মাসের রিপোর্ট";
-            }
-            
+            if(type === 'weekly') { for(let i=0; i<7; i++) { let d = new Date(currentS.y, currentS.m, currentS.d); d.setDate(d.getDate() - i); dates.push(getDateKey(d)); } document.getElementById('reportTitle').innerText = "সাপ্তাহিক রিপোর্ট"; }
+            else { const last = new Date(currentS.y, currentS.m + 1, 0).getDate(); for(let i=1; i<=last; i++) dates.push(`${currentS.y}-${String(currentS.m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`); document.getElementById('reportTitle').innerText = banglaMonths[currentS.m] + " মাসের রিপোর্ট"; }
             const snapshot = await get(ref(db, `daily_records`));
             const all = snapshot.val() || {};
             let t = { net: 0, cash: 0, exp: 0, due: 0 };
-
-            dates.forEach(d => {
-                if(all[d]) {
-                    const day = all[d].cash || {};
-                    const cs = ( (day.closing||0) + (day.expense_total||0) + (day.bk_out||0) ) - ( (day.opening||0) + (day.bk_in||0) );
-                    t.cash += cs; t.due += (day.due_total||0); t.exp += (day.expense_total||0); t.net += (cs + (day.due_total||0));
-                }
-            });
-
-            content.innerHTML = `
-                <div class="grid grid-cols-2 gap-3 text-sm">
-                    <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800">
-                        <span class="opacity-60 text-[10px] font-bold uppercase block mb-1">নিট বিক্রি</span>
-                        <div class="text-xl font-black text-emerald-600 dark:text-emerald-400">৳ ${t.net}</div>
-                    </div>
-                    <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800">
-                        <span class="opacity-60 text-[10px] font-bold uppercase block mb-1">নগদ বিক্রি</span>
-                        <div class="text-xl font-black text-indigo-600 dark:text-indigo-400">৳ ${t.cash}</div>
-                    </div>
-                    <div class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-800">
-                        <span class="opacity-60 text-[10px] font-bold uppercase block mb-1">মোট খরচ</span>
-                        <div class="text-xl font-black text-orange-600 dark:text-orange-400">৳ ${t.exp}</div>
-                    </div>
-                    <div class="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800">
-                        <span class="opacity-60 text-[10px] font-bold uppercase block mb-1">মোট বাকি</span>
-                        <div class="text-xl font-black text-rose-600 dark:text-rose-400">৳ ${t.due}</div>
-                    </div>
-                </div>`;
+            dates.forEach(d => { if(all[d]) { const day = all[d].cash || {}; const cs = ((day.closing||0)+(day.expense_total||0)+(day.bk_out||0)) - ((day.opening||0)+(day.bk_in||0)); t.cash += cs; t.due += (day.due_total||0); t.exp += (day.expense_total||0); t.net += (cs + (day.due_total||0)); } });
+            content.innerHTML = `<div class="grid grid-cols-2 gap-3 text-sm"><div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800"><span class="opacity-60 text-[10px] font-bold block mb-1">নিট বিক্রি</span><div class="text-xl font-black text-emerald-600 dark:text-emerald-400">৳ ${t.net}</div></div><div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800"><span class="opacity-60 text-[10px] font-bold block mb-1">নগদ বিক্রি</span><div class="text-xl font-black text-indigo-600 dark:text-indigo-400">৳ ${t.cash}</div></div><div class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-800"><span class="opacity-60 text-[10px] font-bold block mb-1">মোট খরচ</span><div class="text-xl font-black text-orange-600 dark:text-orange-400">৳ ${t.exp}</div></div><div class="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800"><span class="opacity-60 text-[10px] font-bold block mb-1">মোট বাকি</span><div class="text-xl font-black text-rose-600 dark:text-rose-400">৳ ${t.due}</div></div></div>`;
             document.getElementById('reportRange').innerText = `${toBangla(dates[dates.length-1])} থেকে ${toBangla(dates[0])}`;
         };
 
-        document.getElementById('boxReport').onclick = () => {
-            toggleModal('reportModal', true); 
-            generateReport('weekly');
-        };
+        document.getElementById('boxReport').onclick = () => { toggleModal('reportModal', true); generateReport('weekly'); };
         document.getElementById('btnWeekly').onclick = () => generateReport('weekly');
         document.getElementById('btnMonthly').onclick = () => generateReport('monthly');
         document.getElementById('closeReport').onclick = () => toggleModal('reportModal', false);
+        document.getElementById('btnTheme').onclick = () => { document.body.classList.toggle('dark-theme'); document.getElementById('sunIcon').classList.toggle('hidden'); document.getElementById('moonIcon').classList.toggle('hidden'); };
 
-        // Export & Theme
-        document.getElementById('btnExport').onclick = () => {
-            html2canvas(document.getElementById('captureArea'), {
-                backgroundColor: document.body.classList.contains('dark-theme') ? '#0b0f1a' : '#f3f4f6',
-                scale: 2
-            }).then(canvas => {
-                const link = document.createElement('a'); 
-                link.download = `Report_${getDateKey()}.png`; 
-                link.href = canvas.toDataURL(); 
-                link.click();
-            });
-        };
-
-        document.getElementById('btnDownloadReport').onclick = () => {
-            html2canvas(document.getElementById('reportCaptureArea'), {
-                backgroundColor: document.body.classList.contains('dark-theme') ? '#0b0f1a' : '#f3f4f6',
-                scale: 2
-            }).then(canvas => {
-                const link = document.createElement('a'); link.download = `Summary_Report.png`; link.href = canvas.toDataURL(); link.click();
-            });
-        };
-
-        document.getElementById('btnTheme').onclick = () => {
-            document.body.classList.toggle('dark-theme');
-            document.getElementById('sunIcon').classList.toggle('hidden');
-            document.getElementById('moonIcon').classList.toggle('hidden');
-        };
-
-        // Initialize
         updateUI();
     </script>
 </body>
