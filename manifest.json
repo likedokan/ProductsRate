@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Checker - Aurora Pro</title>
+    
+    <!-- PWA Metadata -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/11529/11529431.png">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- QR/Barcode Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-soft: #eef2ff;
+            --secondary: #10b981;
+            --accent: #f43f5e;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-main: #0f172a;
+            --text-soft: #64748b;
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05);
+            --shadow-md: 0 10px 25px -5px rgba(0,0,0,0.08);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Hind Siliguri', 'Outfit', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding-bottom: 160px;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+
+        /* --- Stylish Header --- */
+        .app-header {
+            padding: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: rgba(248, 250, 252, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .brand h1 {
+            font-size: 28px; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .util-btns { display: flex; gap: 10px; }
+
+        .icon-btn {
+            width: 42px; height: 42px; background: var(--card);
+            border-radius: 14px; border: 1px solid #e2e8f0;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: var(--shadow-sm); color: var(--text-soft);
+            transition: var(--transition);
+        }
+
+        .icon-btn:active { transform: scale(0.9); background: var(--primary-soft); color: var(--primary); }
+
+        /* --- Dashboard --- */
+        .dashboard {
+            background: var(--card); border-radius: var(--radius-xl);
+            padding: 25px; box-shadow: var(--shadow-md);
+            margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.8);
+            position: relative; overflow: hidden;
+        }
+
+        .dash-content { position: relative; z-index: 1; }
+
+        .main-stat { margin-bottom: 20px; }
+        .main-stat span { font-size: 12px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 1px; }
+        .main-stat h2 { font-size: 36px; font-weight: 800; color: var(--primary); font-family: 'Outfit'; }
+
+        .sub-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid #f1f5f9; padding-top: 15px; }
+        .sub-stat h4 { font-size: 18px; font-weight: 700; color: var(--text-main); }
+        .sub-stat p { font-size: 11px; color: var(--text-soft); font-weight: 600; }
+
+        /* --- Quick Action Bar --- */
+        .action-bar { display: flex; gap: 12px; margin-bottom: 25px; }
+        .search-wrapper { flex: 1; position: relative; }
+        .search-input {
+            width: 100%; padding: 15px 20px 15px 50px;
+            background: var(--card); border: 1.5px solid #e2e8f0;
+            border-radius: 100px; font-size: 15px; transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        .search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); }
+        .add-mini-btn {
+            padding: 0 20px; background: var(--primary); color: white;
+            border-radius: 100px; border: none; font-weight: 700;
+            cursor: pointer; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            display: flex; align-items: center; gap: 8px; font-size: 14px;
+        }
+
+        /* --- Product Grid --- */
+        .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .product-card {
+            background: var(--card); padding: 20px; border-radius: var(--radius-lg);
+            border: 1px solid #f1f5f9; box-shadow: var(--shadow-sm);
+            display: flex; flex-direction: column; transition: var(--transition);
+            cursor: pointer;
+        }
+        .p-cat { font-size: 9px; font-weight: 800; color: var(--primary); text-transform: uppercase; background: var(--primary-soft); padding: 2px 8px; border-radius: 100px; display: inline-block; margin-bottom: 8px; }
+        .p-name { font-size: 16px; font-weight: 700; color: var(--text-main); height: 42px; overflow: hidden; margin-bottom: 10px; }
+        .p-footer { margin-top: auto; padding-top: 10px; border-top: 1px dashed #f1f5f9; }
+        .p-sell-price { font-size: 20px; font-weight: 800; color: var(--primary); }
+
+        /* --- Navigation --- */
+        .bottom-nav {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--text-main); color: white; padding: 12px 20px;
+            border-radius: 100px; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); z-index: 1000;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; opacity: 0.7; width: 60px; }
+        .nav-item.active { opacity: 1; }
+        .nav-item span { font-size: 10px; font-weight: 700; }
+        .scan-circle {
+            width: 60px; height: 60px; background: var(--primary);
+            border-radius: 50%; margin-top: -40px; border: 5px solid var(--bg);
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Forms & Overlays */
+        #formPanel { display: none; background: var(--card); padding: 30px; border-radius: var(--radius-xl); box-shadow: var(--shadow-md); margin-bottom: 25px; }
+        .form-group { margin-bottom: 18px; }
+        .modern-input { width: 100%; padding: 16px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; }
+        .submit-btn { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 18px; font-weight: 800; cursor: pointer; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: flex-end; z-index: 5000; }
+        .sheet { background: white; width: 100%; max-width: 500px; padding: 40px 30px; border-radius: 40px 40px 0 0; }
+        .toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: var(--text-main); color: white; padding: 12px 24px; border-radius: 100px; font-size: 14px; z-index: 9000; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="toast" id="toast">বার্তা এখানে আসবে</div>
+
+<div class="container">
+    <header class="app-header">
+        <div class="brand"><h1>Aurora Pro</h1></div>
+        <div class="util-btns">
+            <button class="icon-btn" onclick="exportData()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
+            <button class="icon-btn" onclick="getAIAdvice()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
+        </div>
+    </header>
+
+    <div class="dashboard">
+        <div class="dash-content">
+            <div class="main-stat"><span>মোট ইনভেন্টরি ভ্যালু</span><h2 id="totalVal">৳ ০</h2></div>
+            <div class="sub-stats">
+                <div class="sub-stat"><p>মোট পণ্য</p><h4 id="totalCount">০টি</h4></div>
+                <div class="sub-stat"><p>সম্ভাব্য লাভ</p><h4 id="totalProfit" style="color:var(--secondary)">৳ ০</h4></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <div class="search-wrapper">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="searchInput" class="search-input" placeholder="পণ্য খুঁজুন...">
+        </div>
+        <button class="add-mini-btn" onclick="toggleForm()">+ যোগ</button>
+    </div>
+
+    <div id="formPanel">
+        <h3 id="panelTitle" style="margin-bottom: 20px;">পণ্যের তথ্য</h3>
+        <div class="form-group"><input type="text" id="pName" class="modern-input" placeholder="নাম"></div>
+        <div class="form-group"><input type="text" id="pCode" class="modern-input" placeholder="বারকোড"></div>
+        <div class="form-group"><input type="text" id="pCat" class="modern-input" placeholder="ক্যাটাগরি"></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom: 20px;">
+            <input type="number" id="pBuy" class="modern-input" placeholder="ক্রয়">
+            <input type="number" id="pSell" class="modern-input" placeholder="বিক্রয়">
+        </div>
+        <button class="submit-btn" id="saveBtn">সেভ করুন</button>
+    </div>
+
+    <div id="productGrid" class="product-grid"></div>
+</div>
+
+<nav class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('home')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+        <span>হোম</span>
+    </div>
+    <div class="scan-circle" onclick="startScan()">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+    </div>
+    <div class="nav-item" onclick="switchTab('dev')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>ডেভেলপার</span>
+    </div>
+</nav>
+
+<!-- Scripts -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker Registered'))
+                .catch(err => console.log('SW Registration Failed', err));
+        });
+    }
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDgFaTrHW7Grp_Q22p6KNcHZxaEujHsLsE",
+        authDomain: "exchange-project-d4028.firebaseapp.com",
+        databaseURL: "https://exchange-project-d4028-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "exchange-project-d4028",
+        storageBucket: "exchange-project-d4028.firebasedatabase.app",
+        messagingSenderId: "313976742479",
+        appId: "1:313976742479:web:45951b360d875c4768c03a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const pRef = ref(db, 'bakala_products');
+
+    let allP = [];
+
+    onValue(pRef, (snap) => {
+        const data = snap.val();
+        allP = [];
+        let tVal = 0, tProfit = 0;
+        if (data) {
+            Object.keys(data).forEach(k => {
+                const p = { id: k, ...data[k] };
+                allP.push(p);
+                tVal += parseFloat(p.sellPrice) || 0;
+                tProfit += (p.sellPrice - p.buyPrice) || 0;
+            });
+            document.getElementById('totalCount').innerText = `${allP.length}টি`;
+            document.getElementById('totalVal').innerText = `৳${tVal.toLocaleString()}`;
+            document.getElementById('totalProfit').innerText = `৳${tProfit.toLocaleString()}`;
+            render(allP);
+        }
+    });
+
+    function render(list) {
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = "";
+        list.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'product-card';
+            div.innerHTML = `
+                <span class="p-cat">${p.category || 'সাধারণ'}</span>
+                <h4 class="p-name">${p.name}</h4>
+                <div class="p-footer"><span class="p-sell-price">৳${p.sellPrice}</span></div>
+            `;
+            grid.appendChild(div);
+        });
+    }
+
+    window.toggleForm = () => {
+        const p = document.getElementById('formPanel');
+        p.style.display = p.style.display === 'block' ? 'none' : 'block';
+    };
+
+    document.getElementById('saveBtn').onclick = async () => {
+        const name = document.getElementById('pName').value;
+        const buy = document.getElementById('pBuy').value;
+        const sell = document.getElementById('pSell').value;
+        if(name && sell) {
+            await push(pRef, { name, buyPrice: parseFloat(buy), sellPrice: parseFloat(sell), timestamp: Date.now() });
+            toggleForm();
+        }
+    };
+</script>
+</body>
+</html>
+
